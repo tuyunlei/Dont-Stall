@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { CarConfig } from '../types';
 import { CAR_PRESETS } from '../constants';
@@ -9,8 +10,21 @@ interface SandboxControlsProps {
 }
 
 export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpdate }) => {
-    const handleChange = (key: keyof CarConfig, value: number) => {
-        onUpdate({ ...config, [key]: value, name: "Custom" });
+    const updateEngine = (key: keyof typeof config.engine, val: number) => {
+        onUpdate({ ...config, name: 'Custom', engine: { ...config.engine, [key]: val } });
+    };
+
+    const updateFriction = (key: string, val: number) => {
+        onUpdate({ ...config, name: 'Custom', engine: { ...config.engine, frictionCoef: { ...config.engine.frictionCoef, [key]: val } } });
+    }
+
+    const updateChassis = (key: keyof typeof config.chassis, val: number) => {
+        onUpdate({ ...config, name: 'Custom', chassis: { ...config.chassis, [key]: val } });
+    };
+    
+    const updateControls = (key: keyof typeof config.controls, val: number) => {
+        // Only update simple numeric props
+        onUpdate({ ...config, name: 'Custom', controls: { ...config.controls, [key]: val } });
     };
 
     const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -22,11 +36,10 @@ export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpda
 
     return (
         <div className="fixed right-0 top-0 h-full w-80 bg-slate-900 border-l border-slate-700 p-6 overflow-y-auto shadow-xl z-30">
-            <h2 className="text-xl font-bold mb-4 text-white border-b border-slate-700 pb-2">车辆工程实验室</h2>
+            <h2 className="text-xl font-bold mb-4 text-white border-b border-slate-700 pb-2">车辆工程实验室 v3.0</h2>
             
-            {/* Presets */}
             <div className="mb-6">
-                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-2">车辆预设模版</label>
+                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-2">预设</label>
                 <select 
                     className="w-full bg-slate-800 border border-slate-600 text-white text-sm rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                     onChange={handlePresetChange}
@@ -37,37 +50,30 @@ export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpda
                         <option key={key} value={key}>{CAR_PRESETS[key].name}</option>
                     ))}
                 </select>
-                <div className="text-xs text-slate-500 mt-1 italic">当前配置: {config.name}</div>
             </div>
 
             <div className="space-y-6">
-                <ControlGroup label="引擎参数 (Engine Specs)">
-                    <Slider label="怠速 (Idle RPM)" value={config.idleRPM} min={500} max={1200} step={50} onChange={(v) => handleChange('idleRPM', v)} />
-                    <Slider label="红线 (Redline)" value={config.redlineRPM} min={3000} max={10000} step={100} onChange={(v) => handleChange('redlineRPM', v)} />
-                    <Slider label="扭矩系数 (Torque)" value={config.engineForce} min={200} max={1500} step={50} onChange={(v) => handleChange('engineForce', v)} />
-                </ControlGroup>
-
-                <ControlGroup label="物理特性 (Dynamics)">
-                    <Slider label="飞轮惯量 (Inertia)" value={config.flywheelInertia} min={0.1} max={5.0} step={0.1} onChange={(v) => handleChange('flywheelInertia', v)} />
-                    <p className="text-[10px] text-slate-500 mb-2">影响转速上升/下降的速率。数值越大，转速变化越慢（如卡车）；数值越小，响应越灵敏（如赛车）。</p>
+                <ControlGroup label="Engine (Power)">
+                    <Slider label="Idle RPM" value={config.engine.idleRPM} min={500} max={1200} step={50} onChange={(v) => updateEngine('idleRPM', v)} />
+                    <Slider label="Inertia (kg*m2)" value={config.engine.inertia} min={0.1} max={5.0} step={0.1} onChange={(v) => updateEngine('inertia', v)} />
                     
-                    <Slider label="内部摩擦 (Friction)" value={config.engineFriction} min={0.1} max={2.0} step={0.1} onChange={(v) => handleChange('engineFriction', v)} />
-                    <p className="text-[10px] text-slate-500 mb-2">影响空挡松油门时的掉转速快慢。</p>
-
-                    <Slider label="发动机制动 (Eng. Brake)" value={config.engineBrakingCoefficient} min={0.1} max={3.0} step={0.1} onChange={(v) => handleChange('engineBrakingCoefficient', v)} />
-                    <p className="text-[10px] text-slate-500 mb-2">影响带档松油门时的减速感。</p>
+                    <div className="pt-2 border-t border-slate-800">
+                        <label className="text-[10px] font-bold text-slate-500 mb-2 block">FRICTION MODEL</label>
+                        <Slider label="c0 (Static)" value={config.engine.frictionCoef.c0 ?? 10} min={0} max={50} step={1} onChange={(v) => updateFriction('c0', v)} />
+                        <Slider label="kPump (Vacuum)" value={config.engine.frictionCoef.kPump ?? 0.01} min={0} max={0.1} step={0.001} onChange={(v) => updateFriction('kPump', v)} />
+                    </div>
                 </ControlGroup>
 
-                <ControlGroup label="底盘与传动">
-                    <Slider label="轴距 (Wheelbase)" value={config.wheelBase} min={2.0} max={5.0} step={0.1} onChange={(v) => handleChange('wheelBase', v)} />
-                    <Slider label="转向比 (Steering Ratio)" value={config.steeringRatio} min={10.0} max={30.0} step={0.5} onChange={(v) => handleChange('steeringRatio', v)} />
-                    <Slider label="最大方向盘角 (Max Wheel Angle)" value={config.maxSteeringWheelAngle} min={270} max={1080} step={30} onChange={(v) => handleChange('maxSteeringWheelAngle', v)} />
-                    <Slider label="车重 (Mass kg)" value={config.mass} min={800} max={5000} step={50} onChange={(v) => handleChange('mass', v)} />
+                <ControlGroup label="Chassis (Handling)">
+                    <Slider label="Mass (kg)" value={config.chassis.mass} min={800} max={3000} step={50} onChange={(v) => updateChassis('mass', v)} />
+                    <Slider label="CG Height (m)" value={config.chassis.cgHeight} min={0.2} max={1.0} step={0.05} onChange={(v) => updateChassis('cgHeight', v)} />
+                    <Slider label="Friction Coeff" value={config.chassis.tireFriction} min={0.5} max={2.0} step={0.1} onChange={(v) => updateChassis('tireFriction', v)} />
+                    <Slider label="Front Stiffness" value={config.chassis.tireStiffnessFront} min={20000} max={150000} step={5000} onChange={(v) => updateChassis('tireStiffnessFront', v)} />
                 </ControlGroup>
-            </div>
-            
-            <div className="mt-8 p-3 bg-blue-900/20 border border-blue-800 rounded text-xs text-blue-200">
-                提示：调整飞轮惯量和发动机制动系数可以显著改变车辆的“性格”。
+
+                <ControlGroup label="Controls (Feel)">
+                    <Slider label="Throttle Lag (Tau)" value={config.controls.throttleTau} min={0.01} max={0.5} step={0.01} onChange={(v) => updateControls('throttleTau', v)} />
+                </ControlGroup>
             </div>
         </div>
     );
