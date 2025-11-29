@@ -23,6 +23,7 @@ export const runTestSafe = (test: TestDefinition): TestResult => {
     let logs: any[] = [];
     let passed = false;
     let error = undefined;
+    let errorL10n = undefined;
     let snapshot = undefined;
     
     try {
@@ -50,6 +51,13 @@ export const runTestSafe = (test: TestDefinition): TestResult => {
         error = "Critical Harness Error: " + outerError.message;
     }
 
+    if (!passed && logs.length > 0) {
+        const lastLog = logs[logs.length - 1];
+        if (lastLog.type === 'fail' && lastLog.l10n) {
+            errorL10n = lastLog.l10n;
+        }
+    }
+
     return {
         id: test.id,
         category: test.category,
@@ -59,6 +67,7 @@ export const runTestSafe = (test: TestDefinition): TestResult => {
         passed,
         logs,
         error,
+        errorL10n,
         finalStateSnapshot: snapshot,
         duration: performance.now() - start
     };

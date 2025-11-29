@@ -1,5 +1,4 @@
 
-
 import { CarConfig, LevelData } from './types';
 
 export const PX_PER_METER = 20.0;
@@ -24,34 +23,24 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
       idleRPM: 800,
       redlineRPM: 6500,
       maxRPM: 7000,
-      inertia: 0.3, // Increased from 0.2 to improve stall resistance
-      // v3.0 Friction Model: c0(static) + c1(viscous) + c2(aero) + kPump
-      // Calibration Target @ 3000RPM:
-      // T_combustion ~ 160Nm
-      // T_mech target ~ 30Nm -> c0=8, c1=0.005, c2=0.000001
-      // T_pump target ~ 25Nm (at 0 throttle) -> kPump=0.008
-      // Result: WOT Net ~ 130Nm, Coast Net ~ -55Nm
+      inertia: 0.3,
       frictionCoef: { c0: 8, c1: 0.005, c2: 0.000001, kPump: 0.008 },
-      brakingCoeff: 1.0, // Legacy
-      // Custom torque curve for Civilian to improve launch/anti-stall
+      brakingCoeff: 1.0,
       torqueCurve: [
-        { rpm: 0, torque: 30 },    // Base anti-stall torque
-        { rpm: 500, torque: 110 }, // Stronger low-end
+        { rpm: 0, torque: 30 },
+        { rpm: 500, torque: 110 },
         { rpm: 1000, torque: 140 },
-        { rpm: 3000, torque: 160 }, // Peak
+        { rpm: 3000, torque: 160 },
         { rpm: 5500, torque: 152 },
         { rpm: 6500, torque: 128 },
         { rpm: 7500, torque: 0 }
       ],
-      // Recalibrated for v3.0 logic:
-      // kD reduced 10x to prevent oscillation.
-      // Feedforward adjusted to approx equilibrium at 800RPM (~19Nm Friction / ~120Nm MaxTorque = ~0.16)
       idlePID: { kP: 0.002, kI: 0.0001, kD: 0.00005, feedforward: 0.16 }
     },
     transmission: {
       gearRatios: [0, 3.5, 2.0, 1.4, 1.0, 0.8],
       finalDriveRatio: 4.0,
-      clutchMaxTorque: 180, // Reduced from 300 to allow smoother slip and prevent stalling
+      clutchMaxTorque: 180,
       clutchHysteresis: 0.1,
       effectiveMassSmoothFactor: 0.15 
     },
@@ -92,8 +81,8 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
       lowSpeedBlendStart: 0.5,
       lowSpeedBlendEnd: 5.0,
       vSlipMin: 0.5,
-      vStopThreshold: 0.1, // m/s
-      minStopTime: 0.2     // s
+      vStopThreshold: 0.1,
+      minStopTime: 0.2
     }
   },
   SPORT: {
@@ -105,12 +94,9 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
       redlineRPM: 7000,
       maxRPM: 7500,
       inertia: 0.15,
-      // Sport tuning: Higher friction due to aggressive components, but much higher power
       frictionCoef: { c0: 12, c1: 0.008, c2: 0.0000015, kPump: 0.012 },
       brakingCoeff: 1.2,
       torqueCurve: generateGenericTorqueCurve(350, 7000),
-      // Recalibrated for v3.0 logic:
-      // Feedforward lowered due to high engine power (31Nm Friction / 266Nm MaxTorque ~ 0.12)
       idlePID: { kP: 0.0025, kI: 0.0001, kD: 0.00005, feedforward: 0.12 }
     },
     transmission: {
@@ -167,11 +153,11 @@ export const DEFAULT_CAR_CONFIG: CarConfig = CAR_PRESETS.CIVILIAN;
 export const LEVELS: LevelData[] = [
   {
     id: 'lvl1',
-    name: '课程一：直线起步与停车',
-    description: '最基础的驾驶训练。练习离合器与油门的配合，平稳起步并停在目标区域。',
+    name: 'level.lvl1.name',
+    description: 'level.lvl1.desc',
     startPos: { x: 5, y: 15 }, 
     startHeading: 0,
-    instructions: '1. 按 [E] 启动引擎\n2. 按 [Q] 踩住离合\n3. 按 [W] 挂入1档\n4. 轻按 [↑] 给油，将转速维持在 1500-2000 转\n5. 慢慢松开 [Q] 离合找到半联动点\n6. 车身动起来后完全松开离合\n7. 到达绿色方框区域刹车停稳',
+    instructions: 'level.lvl1.inst',
     objects: [
       { id: 'wall_top', type: 'wall', x: 0, y: 7.5, width: 40, height: 0.5, rotation: 0 },
       { id: 'wall_bottom', type: 'wall', x: 0, y: 22.5, width: 40, height: 0.5, rotation: 0 },
@@ -181,11 +167,11 @@ export const LEVELS: LevelData[] = [
   },
   {
     id: 'lvl2',
-    name: '课程二：基础倒车入库',
-    description: '学习使用倒档和后视镜原理（想象），将车辆停入指定车位。',
+    name: 'level.lvl2.name',
+    description: 'level.lvl2.desc',
     startPos: { x: 10, y: 15 },
     startHeading: 0,
-    instructions: '1. 向前开过车位，车尾超过库口\n2. 踩离合刹车停稳\n3. 按 [S] 挂入倒档 (R)\n4. 控制好离合器（半联动），缓慢倒车\n5. 配合转向倒入车位',
+    instructions: 'level.lvl2.inst',
     objects: [
       { id: 'wall_top', type: 'wall', x: 10, y: 5, width: 30, height: 0.5, rotation: 0 },
       { id: 'spot_left', type: 'wall', x: 19, y: 10, width: 0.5, height: 5, rotation: 0 },
@@ -197,17 +183,17 @@ export const LEVELS: LevelData[] = [
   },
   {
     id: 'lvl3',
-    name: '课程三：坡道起步 (Hill Start)',
-    description: '进阶测试。在15%的坡度上完成起步，不溜车、不熄火。',
+    name: 'level.lvl3.name',
+    description: 'level.lvl3.desc',
     startPos: { x: 2, y: 15 },
     startHeading: 0,
-    instructions: '注意：本关卡处于上坡路段！\n1. 启动引擎，挂入1档\n2. 保持刹车防止溜车\n3. 慢慢抬离合直到车身颤抖（RPM下降）\n4. 稳住离合，快速松刹车并跟油门\n5. 目标是平稳爬坡',
+    instructions: 'level.lvl3.inst',
     objects: [
         { id: 'wall_top', type: 'wall', x: 0, y: 10, width: 50, height: 0.5, rotation: 0 },
         { id: 'wall_bottom', type: 'wall', x: 0, y: 20, width: 50, height: 0.5, rotation: 0 },
         { id: 'target', type: 'parking-spot', x: 30, y: 13.5, width: 5, height: 3, rotation: 0, target: true }
     ],
-    environment: { gravity: 9.81, slope: 0.15 } // ~8.5 degrees
+    environment: { gravity: 9.81, slope: 0.15 } 
   }
 ];
 

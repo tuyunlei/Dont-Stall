@@ -1,5 +1,4 @@
 
-
 import React, { useRef, useEffect, useState } from 'react';
 import { PhysicsState, CarConfig, LevelData, StoppingState } from '../types';
 import { updatePhysics } from '../services/physicsEngine';
@@ -7,6 +6,7 @@ import { renderService } from '../services/renderService';
 import { checkCollisions } from '../services/collisionService';
 import { Dashboard } from './Dashboard';
 import { useInputControl } from '../hooks/useInputControl';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface GameCanvasProps {
   level: LevelData;
@@ -17,6 +17,7 @@ interface GameCanvasProps {
 export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
+  const { t } = useLanguage();
   
   const initialState: PhysicsState = {
     position: { ...level.startPos },
@@ -53,7 +54,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
   const resetCar = () => {
       physicsStateRef.current = { ...initialState, position: { ...level.startPos }, heading: level.startHeading };
       inputsRef.current.throttle = false;
-      setMessage("重置车辆");
+      setMessage(t('msg.reset'));
       setTimeout(() => setMessage(''), 2000);
   };
 
@@ -75,11 +76,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
             currentState.stalled = false;
             currentState.rpm = carConfig.engine.idleRPM;
             currentState.idleIntegral = 0;
-            setMessage("引擎启动");
+            setMessage(t('msg.engine_on'));
             setTimeout(() => setMessage(''), 2000);
         } else {
             currentState.engineOn = false;
-            setMessage("引擎关闭");
+            setMessage(t('msg.engine_off'));
             setTimeout(() => setMessage(''), 2000);
         }
     }
@@ -93,7 +94,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
             const nextGear = currentState.gear + 1;
             if (nextGear < carConfig.transmission.gearRatios.length) currentState.gear = nextGear;
         } else {
-            setMessage("请踩下离合器换挡!");
+            setMessage(t('msg.clutch_warn'));
             setTimeout(() => setMessage(''), 1000);
         }
     }
@@ -102,7 +103,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
             const prevGear = currentState.gear - 1;
             if (prevGear >= -1) currentState.gear = prevGear;
         } else {
-            setMessage("请踩下离合器换挡!");
+            setMessage(t('msg.clutch_warn'));
             setTimeout(() => setMessage(''), 1000);
         }
     }
@@ -116,10 +117,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
         physicsStateRef.current.localVelocity = { x: 0, y: 0 };
         physicsStateRef.current.engineOn = false;
         physicsStateRef.current.stalled = true;
-        setMessage("碰撞! 引擎熄火");
+        setMessage(t('msg.collision'));
     }
     if (success) {
-        setMessage("任务完成! 完美停车");
+        setMessage(t('msg.success'));
     }
     
     renderService.clear();
@@ -161,10 +162,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
       <canvas ref={canvasRef} className="block touch-none" />
       
       <div className="absolute top-0 left-0 p-4 pointer-events-none">
-         <h1 className="text-2xl font-bold text-slate-200">{level.name}</h1>
-         <p className="text-slate-400 max-w-md mt-2 text-sm">{level.description}</p>
+         <h1 className="text-2xl font-bold text-slate-200">{t(level.name)}</h1>
+         <p className="text-slate-400 max-w-md mt-2 text-sm">{t(level.description)}</p>
          <div className="mt-4 bg-slate-800/80 p-4 rounded border border-slate-700 text-sm font-mono whitespace-pre-line text-slate-300">
-             {level.instructions}
+             {t(level.instructions)}
          </div>
          {message && (
              <div className="mt-4 p-3 bg-blue-600/90 text-white font-bold rounded animate-bounce">
@@ -174,13 +175,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
       </div>
 
       <div className="absolute top-4 right-4 text-right pointer-events-none opacity-50">
-          <div className="text-xs text-slate-500">PHYSICS 3.0 STABLE</div>
+          <div className="text-xs text-slate-500">{t('hud.physics')}</div>
           <div className="font-mono text-xs text-slate-400">
               POS: {dashboardState.position.x.toFixed(2)}m, {dashboardState.position.y.toFixed(2)}m <br/>
               RPM: {Math.round(dashboardState.rpm)} <br/>
               SPEED: {dashboardState.speedKmh.toFixed(1)} km/h <br/>
-              STATE: {dashboardState.stoppingState} <br/>
-              ENV: {level.environment?.slope ? `${(level.environment.slope * 100).toFixed(0)}% SLOPE` : 'FLAT'}
+              {t('hud.state')}: {dashboardState.stoppingState} <br/>
+              {level.environment?.slope ? `${(level.environment.slope * 100).toFixed(0)}% ${t('hud.slope')}` : t('hud.flat')}
           </div>
       </div>
 

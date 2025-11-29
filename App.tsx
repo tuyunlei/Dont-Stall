@@ -5,6 +5,7 @@ import { SandboxControls } from './components/SandboxControls';
 import { UnitTests } from './components/UnitTests';
 import { LevelData, GameMode, CarConfig } from './types';
 import { LEVELS, DEFAULT_CAR_CONFIG } from './constants';
+import { useLanguage } from './contexts/LanguageContext';
 
 const App: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState<LevelData>(LEVELS[0]);
@@ -12,6 +13,8 @@ const App: React.FC = () => {
   const [carConfig, setCarConfig] = useState<CarConfig>(DEFAULT_CAR_CONFIG);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showTests, setShowTests] = useState(false);
+  
+  const { t, language, setLanguage } = useLanguage();
 
   const handleLevelSelect = (level: LevelData) => {
       setCurrentLevel(level);
@@ -29,6 +32,10 @@ const App: React.FC = () => {
       setIsMenuOpen(false);
   };
 
+  const toggleLanguage = () => {
+      setLanguage(language === 'zh-CN' ? 'en-US' : 'zh-CN');
+  };
+
   return (
     <div className="w-screen h-screen overflow-hidden bg-slate-900 font-sans text-slate-200 relative">
         
@@ -37,21 +44,30 @@ const App: React.FC = () => {
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                      <span className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
-                     <h1 className="text-xl font-bold tracking-tight">ProDriver Lab</h1>
+                     <h1 className="text-xl font-bold tracking-tight">{t('app.title')}</h1>
                 </div>
                 <div className="h-6 w-px bg-slate-700 mx-2"></div>
                 <div className="text-sm text-slate-400 font-mono">
-                    {gameMode === GameMode.SANDBOX ? 'SANDBOX MODE' : currentLevel.name}
+                    {gameMode === GameMode.SANDBOX ? t('app.mode.sandbox') : t(currentLevel.name)}
                 </div>
             </div>
 
-            <button 
-                onClick={() => setIsMenuOpen(true)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-sm font-semibold transition-all flex items-center gap-2"
-            >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-                切换课程 / 菜单
-            </button>
+            <div className="flex gap-4">
+                <button 
+                    onClick={toggleLanguage}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-xs font-bold font-mono transition-all"
+                >
+                    {language === 'zh-CN' ? 'EN' : '中文'}
+                </button>
+
+                <button 
+                    onClick={() => setIsMenuOpen(true)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-sm font-semibold transition-all flex items-center gap-2"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    {t('menu.switch')}
+                </button>
+            </div>
         </div>
 
         {/* Level Selection Modal */}
@@ -60,11 +76,11 @@ const App: React.FC = () => {
                 <div className="max-w-4xl w-full">
                     <div className="flex justify-between items-end mb-8 border-b border-slate-700 pb-4">
                         <div>
-                            <h2 className="text-3xl font-bold text-white mb-2">驾驶课程选择</h2>
-                            <p className="text-slate-400">选择一个训练项目开始练习，或进入沙盒模式自由驾驶。</p>
+                            <h2 className="text-3xl font-bold text-white mb-2">{t('menu.title')}</h2>
+                            <p className="text-slate-400">{t('menu.desc')}</p>
                         </div>
                         <button onClick={() => setIsMenuOpen(false)} className="text-slate-400 hover:text-white">
-                            关闭 [ESC]
+                            {t('menu.close')}
                         </button>
                     </div>
 
@@ -83,9 +99,9 @@ const App: React.FC = () => {
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
                                 </div>
-                                <h3 className="text-lg font-bold mb-2 z-10 relative">{lvl.name}</h3>
+                                <h3 className="text-lg font-bold mb-2 z-10 relative">{t(lvl.name)}</h3>
                                 <p className={`text-sm z-10 relative ${currentLevel.id === lvl.id && gameMode === GameMode.LEVELS ? 'text-blue-100' : 'text-slate-400'}`}>
-                                    {lvl.description}
+                                    {t(lvl.description)}
                                 </p>
                             </button>
                         ))}
@@ -102,9 +118,9 @@ const App: React.FC = () => {
                              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
                              </div>
-                            <h3 className="text-lg font-bold mb-2 text-indigo-100">自由沙盒模式</h3>
+                            <h3 className="text-lg font-bold mb-2 text-indigo-100">{t('mode.sandbox.name')}</h3>
                             <p className="text-indigo-200 text-sm">
-                                调整物理参数，自由驾驶，测试车辆极限。
+                                {t('mode.sandbox.desc')}
                             </p>
                         </button>
 
@@ -117,31 +133,31 @@ const App: React.FC = () => {
                                 <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             </div>
                             <h3 className="text-lg font-bold mb-2 text-green-100 flex items-center gap-2">
-                                系统诊断 
+                                {t('mode.tests.name')}
                                 <span className="px-2 py-0.5 bg-green-900/50 text-green-400 text-xs rounded border border-green-700">UNIT TESTS</span>
                             </h3>
                             <p className="text-slate-400 text-sm">
-                                运行物理引擎单元测试套件，验证起步、刹车、熄火逻辑等核心功能。
+                                {t('mode.tests.desc')}
                             </p>
                         </button>
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-slate-800 grid grid-cols-2 gap-8 text-sm text-slate-500">
                         <div>
-                            <h4 className="font-bold text-slate-300 mb-2">基础操作</h4>
+                            <h4 className="font-bold text-slate-300 mb-2">{t('help.basic')}</h4>
                             <div className="grid grid-cols-2 gap-2 font-mono">
-                                <span>[↑] 油门</span>
-                                <span>[↓] 刹车</span>
-                                <span>[←/→] 转向</span>
-                                <span>[Q] 离合器</span>
+                                <span>{t('key.throttle')}</span>
+                                <span>{t('key.brake')}</span>
+                                <span>{t('key.steer')}</span>
+                                <span>{t('key.clutch')}</span>
                             </div>
                         </div>
                         <div>
-                            <h4 className="font-bold text-slate-300 mb-2">进阶操作</h4>
+                            <h4 className="font-bold text-slate-300 mb-2">{t('help.advanced')}</h4>
                             <div className="grid grid-cols-2 gap-2 font-mono">
-                                <span>[W/S] 升降档</span>
-                                <span>[E] 引擎开关</span>
-                                <span>[R] 重置车辆</span>
+                                <span>{t('key.shift')}</span>
+                                <span>{t('key.engine')}</span>
+                                <span>{t('key.reset')}</span>
                             </div>
                         </div>
                     </div>
@@ -155,7 +171,7 @@ const App: React.FC = () => {
         {/* Main Canvas Area */}
         <div className="w-full h-full pt-16 relative">
             <GameCanvas 
-                key={`${currentLevel.id}-${gameMode}`} 
+                key={`${currentLevel.id}-${gameMode}-${language}`} 
                 level={currentLevel} 
                 mode={gameMode} 
                 carConfig={carConfig}

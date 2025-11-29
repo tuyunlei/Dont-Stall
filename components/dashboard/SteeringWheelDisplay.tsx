@@ -1,7 +1,9 @@
 
 import React from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export const SteeringWheelDisplay = ({ angle }: { angle: number }) => {
+    const { t } = useLanguage();
     return (
         <div className="flex flex-col items-center gap-1">
              <div className="w-32 h-32 rounded-full border-4 border-slate-700 bg-slate-800 relative flex items-center justify-center shadow-inner overflow-hidden">
@@ -20,7 +22,7 @@ export const SteeringWheelDisplay = ({ angle }: { angle: number }) => {
                 </div>
              </div>
              <div className="flex flex-col items-center -mt-1">
-                 <span className="text-[10px] font-mono text-slate-500 font-bold">STEER</span>
+                 <span className="text-[10px] font-mono text-slate-500 font-bold">{t('dash.steer')}</span>
                  <span className={`text-[9px] font-mono ${Math.abs(angle) > 360 ? 'text-red-400' : 'text-slate-600'}`}>
                      {Math.round(angle)}°
                  </span>

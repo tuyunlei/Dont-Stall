@@ -1,8 +1,8 @@
 
-
 import React from 'react';
 import { CarConfig } from '../types';
 import { CAR_PRESETS } from '../constants';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SandboxControlsProps {
     config: CarConfig;
@@ -10,6 +10,8 @@ interface SandboxControlsProps {
 }
 
 export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpdate }) => {
+    const { t } = useLanguage();
+    
     const updateEngine = (key: keyof typeof config.engine, val: number) => {
         onUpdate({ ...config, name: 'Custom', engine: { ...config.engine, [key]: val } });
     };
@@ -23,7 +25,6 @@ export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpda
     };
     
     const updateControls = (key: keyof typeof config.controls, val: number) => {
-        // Only update simple numeric props
         onUpdate({ ...config, name: 'Custom', controls: { ...config.controls, [key]: val } });
     };
 
@@ -36,16 +37,16 @@ export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpda
 
     return (
         <div className="fixed right-0 top-0 h-full w-80 bg-slate-900 border-l border-slate-700 p-6 overflow-y-auto shadow-xl z-30">
-            <h2 className="text-xl font-bold mb-4 text-white border-b border-slate-700 pb-2">车辆工程实验室 v3.0</h2>
+            <h2 className="text-xl font-bold mb-4 text-white border-b border-slate-700 pb-2">{t('sandbox.title')}</h2>
             
             <div className="mb-6">
-                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-2">预设</label>
+                <label className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-2">{t('sandbox.preset')}</label>
                 <select 
                     className="w-full bg-slate-800 border border-slate-600 text-white text-sm rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                     onChange={handlePresetChange}
                     defaultValue=""
                 >
-                    <option value="" disabled>-- 选择预设 --</option>
+                    <option value="" disabled>{t('sandbox.preset.select')}</option>
                     {Object.keys(CAR_PRESETS).map(key => (
                         <option key={key} value={key}>{CAR_PRESETS[key].name}</option>
                     ))}
@@ -53,25 +54,25 @@ export const SandboxControls: React.FC<SandboxControlsProps> = ({ config, onUpda
             </div>
 
             <div className="space-y-6">
-                <ControlGroup label="Engine (Power)">
+                <ControlGroup label={t('sandbox.group.engine')}>
                     <Slider label="Idle RPM" value={config.engine.idleRPM} min={500} max={1200} step={50} onChange={(v) => updateEngine('idleRPM', v)} />
                     <Slider label="Inertia (kg*m2)" value={config.engine.inertia} min={0.1} max={5.0} step={0.1} onChange={(v) => updateEngine('inertia', v)} />
                     
                     <div className="pt-2 border-t border-slate-800">
-                        <label className="text-[10px] font-bold text-slate-500 mb-2 block">FRICTION MODEL</label>
+                        <label className="text-[10px] font-bold text-slate-500 mb-2 block">{t('sandbox.friction')}</label>
                         <Slider label="c0 (Static)" value={config.engine.frictionCoef.c0 ?? 10} min={0} max={50} step={1} onChange={(v) => updateFriction('c0', v)} />
                         <Slider label="kPump (Vacuum)" value={config.engine.frictionCoef.kPump ?? 0.01} min={0} max={0.1} step={0.001} onChange={(v) => updateFriction('kPump', v)} />
                     </div>
                 </ControlGroup>
 
-                <ControlGroup label="Chassis (Handling)">
+                <ControlGroup label={t('sandbox.group.chassis')}>
                     <Slider label="Mass (kg)" value={config.chassis.mass} min={800} max={3000} step={50} onChange={(v) => updateChassis('mass', v)} />
                     <Slider label="CG Height (m)" value={config.chassis.cgHeight} min={0.2} max={1.0} step={0.05} onChange={(v) => updateChassis('cgHeight', v)} />
                     <Slider label="Friction Coeff" value={config.chassis.tireFriction} min={0.5} max={2.0} step={0.1} onChange={(v) => updateChassis('tireFriction', v)} />
                     <Slider label="Front Stiffness" value={config.chassis.tireStiffnessFront} min={20000} max={150000} step={5000} onChange={(v) => updateChassis('tireStiffnessFront', v)} />
                 </ControlGroup>
 
-                <ControlGroup label="Controls (Feel)">
+                <ControlGroup label={t('sandbox.group.controls')}>
                     <Slider label="Throttle Lag (Tau)" value={config.controls.throttleTau} min={0.01} max={0.5} step={0.01} onChange={(v) => updateControls('throttleTau', v)} />
                 </ControlGroup>
             </div>

@@ -9,15 +9,15 @@ export class UnitContext {
     
     constructor(testId: string) { this.testId = testId; }
     
-    log(message: string, data?: Record<string, any>) { 
-        this.logs.push({ frame: 0, type: 'info', message, data }); 
+    log(message: string, data?: Record<string, any>, l10n?: { key: string; params?: any }) { 
+        this.logs.push({ frame: 0, type: 'info', message, data, l10n }); 
     }
     
-    assert(condition: boolean, message: string, data?: Record<string, any>) {
+    assert(condition: boolean, message: string, data?: Record<string, any>, l10n?: { key: string; params?: any }) {
         if (condition) {
-            this.logs.push({ frame: 0, type: 'pass', message: `PASS: ${message}`, data });
+            this.logs.push({ frame: 0, type: 'pass', message: `PASS: ${message}`, data, l10n });
         } else { 
-            this.logs.push({ frame: 0, type: 'fail', message: `FAIL: ${message}`, data }); 
+            this.logs.push({ frame: 0, type: 'fail', message: `FAIL: ${message}`, data, l10n }); 
             throw new Error(message); 
         }
     }
@@ -62,12 +62,12 @@ export class ScenarioContext {
     };
   }
 
-  log(message: string, data?: Record<string, any>) {
-    this.logs.push({ frame: this.frame, type: 'info', message, data });
+  log(message: string, data?: Record<string, any>, l10n?: { key: string; params?: any }) {
+    this.logs.push({ frame: this.frame, type: 'info', message, data, l10n });
   }
 
-  action(message: string) {
-      this.logs.push({ frame: this.frame, type: 'action', message });
+  action(message: string, l10n?: { key: string; params?: any }) {
+      this.logs.push({ frame: this.frame, type: 'action', message, l10n });
   }
 
   // Helper to extract key state for logs
@@ -89,11 +89,11 @@ export class ScenarioContext {
     }
   }
 
-  assert(condition: boolean, message: string) {
+  assert(condition: boolean, message: string, l10n?: { key: string; params?: any }) {
     if (condition) {
-      this.logs.push({ frame: this.frame, type: 'pass', message: `PASS: ${message}`, data: this.snapshot });
+      this.logs.push({ frame: this.frame, type: 'pass', message: `PASS: ${message}`, data: this.snapshot, l10n });
     } else {
-      this.logs.push({ frame: this.frame, type: 'fail', message: `FAIL: ${message}`, data: this.snapshot });
+      this.logs.push({ frame: this.frame, type: 'fail', message: `FAIL: ${message}`, data: this.snapshot, l10n });
       throw new Error(message);
     }
   }
