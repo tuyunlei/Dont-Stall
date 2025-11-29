@@ -6,6 +6,7 @@ export class RenderService {
     private ctx: CanvasRenderingContext2D | null = null;
     private width: number = 0;
     private height: number = 0;
+    private isDark: boolean = true;
 
     constructor() {}
 
@@ -13,6 +14,10 @@ export class RenderService {
         this.ctx = ctx;
         this.width = width;
         this.height = height;
+    }
+
+    setTheme(isDark: boolean) {
+        this.isDark = isDark;
     }
 
     clear() {
@@ -40,7 +45,8 @@ export class RenderService {
         if (!this.ctx) return;
         const ctx = this.ctx;
         
-        ctx.strokeStyle = '#1e293b';
+        // Grid color based on theme
+        ctx.strokeStyle = this.isDark ? '#1e293b' : '#cbd5e1';
         ctx.lineWidth = 1;
         
         // Grid size 5 meters
@@ -82,17 +88,17 @@ export class RenderService {
         ctx.rotate(obj.rotation);
         
         if (obj.type === 'wall') {
-            ctx.fillStyle = '#475569';
+            ctx.fillStyle = this.isDark ? '#475569' : '#94a3b8';
             ctx.fillRect(-pw/2, -ph/2, pw, ph);
-            ctx.strokeStyle = '#94a3b8';
+            ctx.strokeStyle = this.isDark ? '#94a3b8' : '#64748b';
             ctx.lineWidth = 2;
             ctx.strokeRect(-pw/2, -ph/2, pw, ph);
         } else if (obj.type === 'parking-spot') {
-            ctx.strokeStyle = obj.target ? '#4ade80' : '#ffffff';
+            ctx.strokeStyle = obj.target ? '#4ade80' : (this.isDark ? '#ffffff' : '#475569');
             ctx.lineWidth = 3;
             ctx.setLineDash([10, 5]);
             ctx.strokeRect(-pw/2, -ph/2, pw, ph);
-            ctx.fillStyle = obj.target ? 'rgba(74, 222, 128, 0.1)' : 'transparent';
+            ctx.fillStyle = obj.target ? (this.isDark ? 'rgba(74, 222, 128, 0.1)' : 'rgba(74, 222, 128, 0.2)') : 'transparent';
             ctx.fillRect(-pw/2, -ph/2, pw, ph);
             ctx.setLineDash([]);
         }
@@ -112,12 +118,12 @@ export class RenderService {
         const wb = config.chassis.wheelBase * PX_PER_METER;
 
         // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.fillRect(-l/2 + 4, -w/2 + 4, l, w);
 
         const wheelW = 0.2 * PX_PER_METER;
         const wheelL = 0.6 * PX_PER_METER;
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#1e293b'; // Tire color usually black/dark grey regardless of theme
         
         // Rear Wheels
         ctx.fillRect(-wb/2 - wheelL/2, -w/2 - wheelW/2, wheelL, wheelW); 
@@ -147,7 +153,7 @@ export class RenderService {
         ctx.stroke();
 
         // Windshield
-        ctx.fillStyle = '#1e293b'; 
+        ctx.fillStyle = this.isDark ? '#1e293b' : '#cbd5e1'; 
         ctx.fillRect(l*0.1, -w/2 + 2, l*0.2, w - 4);
 
         // Headlights

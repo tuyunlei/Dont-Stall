@@ -6,6 +6,7 @@ import { Gauge } from './dashboard/Gauge';
 import { TelemetryBar } from './dashboard/TelemetryBar';
 import { SteeringWheelDisplay } from './dashboard/SteeringWheelDisplay';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface DashboardProps {
   state: PhysicsState;
@@ -15,6 +16,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
   const visualStateRef = useRef(state);
   const { t } = useLanguage();
+  const { isDark } = useTheme();
   
   if (!visualStateRef.current) visualStateRef.current = state;
   visualStateRef.current = {
@@ -51,33 +53,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
   const isRedlining = displayState.rpm > redline;
   const isNearRedline = displayState.rpm > redline - 500;
 
+  // Colors based on theme
+  const engineOnColor = displayState.engineOn ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : (isDark ? 'bg-slate-700' : 'bg-slate-300');
+  const stallColor = displayState.stalled ? 'bg-red-600 animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]' : (isDark ? 'bg-slate-700' : 'bg-slate-300');
+  const gearBorder = isRedlining ? 'bg-red-900/40 border-red-500 animate-pulse' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-300');
+  const gearTextDefault = isDark ? 'text-blue-100' : 'text-slate-800';
+
   return (
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-end gap-6 select-none perspective-[500px]">
         {/* Main Cluster */}
-        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-700/60 rounded-3xl p-6 pb-8 flex items-end gap-8 shadow-2xl ring-1 ring-white/10 transform-gpu">
-            <Gauge value={displayState.rpm} max={maxDisplayedRPM} label={t('dash.rpm')} unit="x1000" zones={rpmZones} labelDivider={1000} majorTicksCount={maxDisplayedRPM / 1000} minorTicksPerMajor={4} />
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 pb-8 flex items-end gap-8 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transform-gpu transition-colors duration-300">
+            <Gauge 
+                value={displayState.rpm} 
+                max={maxDisplayedRPM} 
+                label={t('dash.rpm')} 
+                unit="x1000" 
+                zones={rpmZones} 
+                labelDivider={1000} 
+                majorTicksCount={maxDisplayedRPM / 1000} 
+                minorTicksPerMajor={4} 
+                isDark={isDark}
+            />
 
             <div className="flex flex-col items-center justify-between h-40 pb-2">
                 <div className="flex gap-2 mb-2">
-                    <div className={`w-2 h-2 rounded-full ${displayState.engineOn ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-slate-700'}`} title={t('dash.engine_status')} />
-                    <div className={`w-2 h-2 rounded-full ${displayState.stalled ? 'bg-red-600 animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]' : 'bg-slate-700'}`} title={t('dash.stall_warning')} />
+                    <div className={`w-2 h-2 rounded-full ${engineOnColor}`} title={t('dash.engine_status')} />
+                    <div className={`w-2 h-2 rounded-full ${stallColor}`} title={t('dash.stall_warning')} />
                 </div>
-                <div className={`relative flex items-center justify-center w-28 h-28 rounded-2xl border-2 transition-colors duration-100 ${isRedlining ? 'bg-red-900/40 border-red-500 animate-pulse' : 'bg-slate-800 border-slate-700'} ${displayState.gear === 0 ? 'border-green-900/50' : ''}`}>
+                <div className={`relative flex items-center justify-center w-28 h-28 rounded-2xl border-2 transition-colors duration-100 ${gearBorder} ${displayState.gear === 0 ? 'border-green-600/50' : ''}`}>
                     <span className="absolute top-2 text-[10px] font-bold text-slate-500 tracking-widest">{t('dash.gear')}</span>
-                    <span className={`text-7xl font-black font-mono tracking-tighter z-10 ${displayState.gear === 0 ? 'text-green-500' : displayState.gear === -1 ? 'text-orange-500' : 'text-blue-100'} ${isNearRedline && displayState.gear > 0 ? 'text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'drop-shadow-lg'}`}>{getGearLabel(displayState.gear)}</span>
+                    <span className={`text-7xl font-black font-mono tracking-tighter z-10 ${displayState.gear === 0 ? 'text-green-500' : displayState.gear === -1 ? 'text-orange-500' : gearTextDefault} ${isNearRedline && displayState.gear > 0 ? 'text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'drop-shadow-lg'}`}>{getGearLabel(displayState.gear)}</span>
                 </div>
             </div>
 
-            <Gauge value={displayState.speedKmh} max={220} label={t('dash.speed')} unit="km/h" majorTicksCount={11} minorTicksPerMajor={1} />
+            <Gauge 
+                value={displayState.speedKmh} 
+                max={220} 
+                label={t('dash.speed')} 
+                unit="km/h" 
+                majorTicksCount={11} 
+                minorTicksPerMajor={1} 
+                isDark={isDark}
+            />
         </div>
 
         {/* Input Telemetry */}
-        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/60 rounded-xl p-4 flex gap-4 shadow-xl h-fit">
-            <SteeringWheelDisplay angle={displayState.steeringWheelAngle} />
-            <div className="w-px bg-slate-700 mx-1"></div>
-            <TelemetryBar value={displayState.clutchPosition} color="bg-yellow-500" label={t('dash.clutch')} />
-            <TelemetryBar value={displayState.brakeInput} color="bg-red-500" label={t('dash.brake')} />
-            <TelemetryBar value={displayState.throttleInput} color="bg-green-500" label={t('dash.throttle')} />
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 flex gap-4 shadow-xl h-fit transition-colors duration-300">
+            <SteeringWheelDisplay angle={displayState.steeringWheelAngle} isDark={isDark} />
+            <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+            <TelemetryBar value={displayState.clutchPosition} color="bg-yellow-500" label={t('dash.clutch')} isDark={isDark} />
+            <TelemetryBar value={displayState.brakeInput} color="bg-red-500" label={t('dash.brake')} isDark={isDark} />
+            <TelemetryBar value={displayState.throttleInput} color="bg-green-500" label={t('dash.throttle')} isDark={isDark} />
         </div>
     </div>
   );

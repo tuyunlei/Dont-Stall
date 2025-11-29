@@ -20,6 +20,7 @@ interface GaugeProps {
     majorTicksCount?: number;
     minorTicksPerMajor?: number;
     labelDivider?: number;
+    isDark?: boolean;
 }
 
 export const Gauge: React.FC<GaugeProps> = ({
@@ -31,7 +32,8 @@ export const Gauge: React.FC<GaugeProps> = ({
     zones = [],
     majorTicksCount = 5,
     minorTicksPerMajor = 4,
-    labelDivider = 1
+    labelDivider = 1,
+    isDark = true
 }) => {
     const CX = 64;
     const CY = 64;
@@ -39,6 +41,12 @@ export const Gauge: React.FC<GaugeProps> = ({
     const START_ANGLE = -135;
     const END_ANGLE = 135;
     const currentAngle = mapValueToAngle(value, min, max);
+
+    const strokeColor = isDark ? "#e2e8f0" : "#334155";
+    const subTickColor = isDark ? "#64748b" : "#94a3b8";
+    const labelColor = isDark ? "#94a3b8" : "#64748b";
+    const ringColor = isDark ? "#1e293b" : "#cbd5e1";
+    const textColor = isDark ? "white" : "#1e293b";
 
     // Generate Ticks
     const ticks = [];
@@ -51,13 +59,13 @@ export const Gauge: React.FC<GaugeProps> = ({
         const p2 = polarToCartesian(CX, CY, RADIUS - 8, angle);
 
         ticks.push(
-            <line key={`maj-${v}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#e2e8f0" strokeWidth="2" />
+            <line key={`maj-${v}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={strokeColor} strokeWidth="2" />
         );
 
         const labelRadius = RADIUS - 18;
         const pLabel = polarToCartesian(CX, CY, labelRadius, angle);
         ticks.push(
-            <text key={`lbl-${v}`} x={pLabel.x} y={pLabel.y} fill="#94a3b8" fontSize="8" fontWeight="600" textAnchor="middle" dominantBaseline="middle" fontFamily="monospace">
+            <text key={`lbl-${v}`} x={pLabel.x} y={pLabel.y} fill={labelColor} fontSize="8" fontWeight="600" textAnchor="middle" dominantBaseline="middle" fontFamily="monospace">
                 {Math.round(v / labelDivider)}
             </text>
         );
@@ -71,7 +79,7 @@ export const Gauge: React.FC<GaugeProps> = ({
                 const mp1 = polarToCartesian(CX, CY, RADIUS, mAngle);
                 const mp2 = polarToCartesian(CX, CY, RADIUS - 4, mAngle);
                 ticks.push(
-                    <line key={`min-${minorV}`} x1={mp1.x} y1={mp1.y} x2={mp2.x} y2={mp2.y} stroke="#64748b" strokeWidth="1" />
+                    <line key={`min-${minorV}`} x1={mp1.x} y1={mp1.y} x2={mp2.x} y2={mp2.y} stroke={subTickColor} strokeWidth="1" />
                 );
             }
         }
@@ -86,7 +94,7 @@ export const Gauge: React.FC<GaugeProps> = ({
                         <stop offset="100%" stopColor="#b91c1c" />
                     </linearGradient>
                 </defs>
-                <path d={describeArc(CX, CY, RADIUS, START_ANGLE, END_ANGLE)} fill="none" stroke="#1e293b" strokeWidth="6" strokeLinecap="round" />
+                <path d={describeArc(CX, CY, RADIUS, START_ANGLE, END_ANGLE)} fill="none" stroke={ringColor} strokeWidth="6" strokeLinecap="round" />
                 {zones.map((zone, i) => {
                     const zMin = Math.max(min, zone.min);
                     const zMax = Math.min(max, zone.max);
@@ -104,10 +112,10 @@ export const Gauge: React.FC<GaugeProps> = ({
                 </g>
             </svg>
             <div className="absolute top-[60%] flex flex-col items-center pointer-events-none">
-                <span className="text-2xl font-bold font-mono text-white tracking-tighter drop-shadow-md">{Math.round(value)}</span>
+                <span className="text-2xl font-bold font-mono tracking-tighter drop-shadow-md" style={{ color: textColor }}>{Math.round(value)}</span>
                 <div className="flex flex-col items-center -mt-1">
                     <span className="text-[10px] text-slate-500 font-bold uppercase">{label}</span>
-                    <span className="text-[9px] text-slate-600 font-mono">{unit}</span>
+                    <span className="text-[9px] text-slate-500 font-mono">{unit}</span>
                 </div>
             </div>
         </div>

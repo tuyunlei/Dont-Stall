@@ -7,6 +7,7 @@ import { checkCollisions } from '../services/collisionService';
 import { Dashboard } from './Dashboard';
 import { useInputControl } from '../hooks/useInputControl';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface GameCanvasProps {
   level: LevelData;
@@ -18,6 +19,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
   const { t } = useLanguage();
+  const { isDark } = useTheme();
   
   const initialState: PhysicsState = {
     position: { ...level.startPos },
@@ -57,6 +59,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
       setMessage(t('msg.reset'));
       setTimeout(() => setMessage(''), 2000);
   };
+
+  // Sync theme to render service
+  useEffect(() => {
+      renderService.setTheme(isDark);
+  }, [isDark]);
 
   useEffect(() => {
       resetCar();
@@ -158,17 +165,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
   }, [carConfig, level]);
 
   return (
-    <div className="relative w-full h-full bg-[#0f172a] overflow-hidden cursor-crosshair">
+    <div className="relative w-full h-full bg-slate-50 dark:bg-[#0f172a] overflow-hidden cursor-crosshair transition-colors duration-300">
       <canvas ref={canvasRef} className="block touch-none" />
       
       <div className="absolute top-0 left-0 p-4 pointer-events-none">
-         <h1 className="text-2xl font-bold text-slate-200">{t(level.name)}</h1>
-         <p className="text-slate-400 max-w-md mt-2 text-sm">{t(level.description)}</p>
-         <div className="mt-4 bg-slate-800/80 p-4 rounded border border-slate-700 text-sm font-mono whitespace-pre-line text-slate-300">
+         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">{t(level.name)}</h1>
+         <p className="text-slate-500 dark:text-slate-400 max-w-md mt-2 text-sm">{t(level.description)}</p>
+         <div className="mt-4 bg-white/80 dark:bg-slate-800/80 p-4 rounded border border-slate-200 dark:border-slate-700 text-sm font-mono whitespace-pre-line text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur">
              {t(level.instructions)}
          </div>
          {message && (
-             <div className="mt-4 p-3 bg-blue-600/90 text-white font-bold rounded animate-bounce">
+             <div className="mt-4 p-3 bg-blue-600/90 text-white font-bold rounded animate-bounce shadow-lg">
                  {message}
              </div>
          )}
@@ -176,7 +183,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
 
       <div className="absolute top-4 right-4 text-right pointer-events-none opacity-50">
           <div className="text-xs text-slate-500">{t('hud.physics')}</div>
-          <div className="font-mono text-xs text-slate-400">
+          <div className="font-mono text-xs text-slate-600 dark:text-slate-400">
               POS: {dashboardState.position.x.toFixed(2)}m, {dashboardState.position.y.toFixed(2)}m <br/>
               RPM: {Math.round(dashboardState.rpm)} <br/>
               SPEED: {dashboardState.speedKmh.toFixed(1)} km/h <br/>
