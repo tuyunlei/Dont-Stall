@@ -1,9 +1,9 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { LanguageProvider } from './contexts/LanguageContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import App from './src/app/App';
+import { LanguageProvider } from './src/app/contexts/LanguageContext';
+import { ThemeProvider } from './src/app/contexts/ThemeContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
