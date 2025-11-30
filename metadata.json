@@ -1,5 +1,5 @@
 {
   "name": "Don't Stall",
-  "description": "一个极简风格的专业驾驶物理模拟器，专注于离合、换挡与车辆动力学研究。",
+  "description": "Manual driving playground in your browser.",
   "requestFramePermissions": []
 }
