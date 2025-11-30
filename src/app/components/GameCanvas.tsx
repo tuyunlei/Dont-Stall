@@ -69,28 +69,43 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
     gameLoopRef.current = loop;
     loop.start();
 
-    // 2. Setup Canvas Context
-    if (canvasRef.current) {
-        const ctx = canvasRef.current.getContext('2d');
-        if (ctx) {
-            renderService.setContext(ctx, canvasRef.current.width, canvasRef.current.height);
-        }
-    }
+    // 2. Setup Canvas Context (Removed)
+    // Context initialization is now handled exclusively by the handleResize effect
+    // to ensure High-DPI scaling is applied correctly before use.
 
     return () => {
         loop.stop();
     };
   }, [level, carConfig]); // Re-create loop when level/config changes
 
-  // Handle Resize
+  // Handle Resize & High-DPI Scaling
   useEffect(() => {
     const handleResize = () => {
         if (canvasRef.current) {
-            canvasRef.current.width = window.innerWidth;
-            canvasRef.current.height = window.innerHeight;
-            const ctx = canvasRef.current.getContext('2d');
+            const canvas = canvasRef.current;
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Logical size (CSS pixels)
+            const logicalWidth = window.innerWidth;
+            const logicalHeight = window.innerHeight;
+
+            // Physical size (Hardware pixels)
+            canvas.width = logicalWidth * dpr;
+            canvas.height = logicalHeight * dpr;
+
+            // CSS styling to match logical size
+            canvas.style.width = `${logicalWidth}px`;
+            canvas.style.height = `${logicalHeight}px`;
+
+            const ctx = canvas.getContext('2d');
             if (ctx) {
-                renderService.setContext(ctx, window.innerWidth, window.innerHeight);
+                // Scale context to match DPI
+                // Reset transform first to ensure clean state
+                ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                ctx.scale(dpr, dpr);
+                
+                // Pass LOGICAL dimensions to render service
+                renderService.setContext(ctx, logicalWidth, logicalHeight);
             }
         }
     };
