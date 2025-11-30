@@ -15,6 +15,7 @@ const generateGenericTorqueCurve = (peakTorque: number, redline: number) => [
 export const CAR_PRESETS: Record<string, CarConfig> = {
   CIVILIAN: {
     name: "Civilian 1.6L Sedan",
+    drivetrainMode: 'NORMAL',
     width: 1.8,
     length: 4.5,
     assists: {
@@ -98,6 +99,7 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
   },
   SPORT: {
     name: "Sport 2.0L Turbo",
+    drivetrainMode: 'NORMAL',
     width: 1.9,
     length: 4.4,
     assists: {
@@ -172,6 +174,7 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
   },
   C1_TRAINER: {
     name: "C1 Trainer (Manual)",
+    drivetrainMode: 'C1_TRAINER', // Hardcore mode
     width: 1.8,
     length: 4.5,
     assists: {
@@ -183,6 +186,11 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
       redlineRPM: 6000,
       maxRPM: 6500,
       inertia: 0.35, // Slightly heavier flywheel for stability
+      starter: {
+        torque: 40.0,     // Strong starter torque
+        maxRPM: 600,      // INCREASED: Allow starter to maintain higher torque at 300rpm to ensure ignition
+        ignitionRPM: 300  // Engine fires up at 300
+      },
       frictionCoef: { c0: 8, c1: 0.005, c2: 0.000001, kPump: 0.008 },
       torqueCurve: [
         { rpm: 0, torque: 40 },    // Higher starting torque
@@ -199,7 +207,7 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
           kD: 0.00005, 
           feedforward: 0.16, 
           maxThrottleIdle: 0.4,
-          maxThrottleAntiStall: 0.9, 
+          maxThrottleAntiStall: 0.5, // Reduced from 0.9 to 0.5 to allow stalling in high gears
           antiStallKpMultiplier: 3.0, 
           antiStallRpmDropThreshold: 50 // Trigger help sooner
       }
@@ -233,9 +241,9 @@ export const CAR_PRESETS: Record<string, CarConfig> = {
       maxSteeringWheelAngle: 540,
     },
     controls: {
-      throttleTau: 0.08, // Lazier throttle
-      brakeTau: 0.05,
-      clutchTau: 0.12,
+      throttleTau: 0.04, // Faster throttle response
+      brakeTau: 0.03,    // Faster brake response
+      clutchTau: 0.05,   // Much faster clutch response
       steeringReturnTau: 0.25,
       steeringCurve: [
           { speed: 0, tau: 0.12 },

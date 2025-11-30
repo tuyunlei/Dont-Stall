@@ -12,6 +12,7 @@ export interface PowertrainOutput {
     effectiveLongitudinalMass: number; 
     stalled: boolean; 
     engineOn: boolean;
+    starterActive: boolean;
     idleIntegral: number;
     brakeTorqueFront: number;
     brakeTorqueRear: number;
@@ -19,7 +20,7 @@ export interface PowertrainOutput {
     currentEffectiveMass: number;
 }
 
-// 1. Compute Net Torque (Combustion - Friction + Idle Correction)
+// 1. Compute Net Torque (Combustion - Friction + Idle Correction + Starter)
 const computeEngineNetTorque = (
     state: PhysicsState, 
     config: CarConfig, 
@@ -30,7 +31,6 @@ const computeEngineNetTorque = (
     
     if (state.engineOn && !state.stalled) {
         // Clutch Position 0.0 = Fully Engaged, 1.0 = Disconnected
-        // We consider clutch "engaged enough" for stall logic if it's less than 0.9 (pedal not fully pressed)
         const isClutchEngaged = state.clutchPosition < 0.9;
         const inGear = state.gear !== 0;
 
@@ -45,8 +45,20 @@ const computeEngineNetTorque = (
         finalThrottle = Math.max(state.throttleInput, idleRes.throttleOffset);
     }
     
-    const torque = calculateEngineTorque(state.rpm, finalThrottle, state.engineOn, state.stalled, config.engine);
-    return { netTorque: torque, throttleUsed: finalThrottle, nextIdleIntegral };
+    let netTorque = calculateEngineTorque(state.rpm, finalThrottle, state.engineOn, state.stalled, config.engine);
+
+    // Apply Starter Torque if actively cranking and engine is off
+    if (state.starterActive && !state.engineOn && !state.stalled) {
+        // Simple linear torque drop-off: Max torque at 0 RPM, 0 torque at maxStarterRPM
+        const starterCfg = config.engine.starter;
+        if (starterCfg) {
+            const starterFactor = Math.max(0, 1.0 - (state.rpm / starterCfg.maxRPM));
+            const starterTorque = starterCfg.torque * starterFactor;
+            netTorque += starterTorque;
+        }
+    }
+
+    return { netTorque, throttleUsed: finalThrottle, nextIdleIntegral };
 };
 
 // 2. Solve Clutch & Transmission State
@@ -83,16 +95,19 @@ const solveClutchState = (
     } else {
         const torqueOk = Math.abs(engineTorque) < clutchCapacity * (1.0 - h);
         const rpmDiffOk = Math.abs(rpmDiff) < 150; 
+        
+        // Logic: Only allow locking if RPM is healthy, OR if we are being dragged by the starter/wheels
+        // For C1 Hardcore, we allow locking even at low RPM to simulate stall conditions
+        const isC1 = config.drivetrainMode === 'C1_TRAINER';
         const rpmHealthy = rpm > (idleRPM * 0.9);
-        if (torqueOk && rpmDiffOk && rpmHealthy) isLocked = true;
+        const canLock = isC1 ? true : rpmHealthy;
+
+        if (torqueOk && rpmDiffOk && canLock) isLocked = true;
     }
 
     // Calculate Transmitted Torque based on state
     let transmittedTorque = 0;
     if (isLocked) {
-        // In locked state, we don't calculate transmitted torque here for the engine side 
-        // because the engine is kinematic constrained. 
-        // But for the sake of checking limits, we assume it holds.
         transmittedTorque = engineTorque; 
     } else {
         const slipSign = Math.sign(rpmDiff);
@@ -152,9 +167,6 @@ const integrateEngine = (
     }
 
     // Physical Invariant: RPM cannot be negative.
-    // Negative RPM implies the engine is spinning backwards, which is impossible 
-    // for a standard 4-stroke engine in this context. 
-    // This guards against numerical instabilities or "impossible" locked states (e.g. rolling back in 1st gear)
     return Math.max(0, nextRPM);
 };
 
@@ -164,6 +176,7 @@ export const updatePowertrain = (
     dt: number
 ): PowertrainOutput => {
     const { localVelocity, gear, clutchPosition } = state;
+    const isC1 = config.drivetrainMode === 'C1_TRAINER';
 
     // A. Engine Torque Calculation
     const { netTorque: engineTorque, nextIdleIntegral } = computeEngineNetTorque(state, config, dt);
@@ -197,22 +210,52 @@ export const updatePowertrain = (
     );
 
     // F. Integrate Engine
-    // If slipping, net torque on engine = generated - transmitted
-    // If locked, integration is overridden by wheel speed, but logically torque balances out.
-    const torqueLoadOnEngine = (gear !== 0 && !isLocked) ? transmittedTorque : 0; // If locked, torque isn't "lost" to friction, but constrained.
-    // Note: If disconnected (gear 0), transmitted is 0.
-    
+    const torqueLoadOnEngine = (gear !== 0 && !isLocked) ? transmittedTorque : 0; 
     const nextRPM = integrateEngine(state.rpm, isLocked, engineTorque - torqueLoadOnEngine, transmissionInputRPM, config.engine.inertia, dt);
 
-    // G. Stall Logic
+    // G. State Logic (Stall / Ignition)
     let nextStalled = state.stalled;
     let nextEngineOn = state.engineOn;
+    let nextStarterActive = state.starterActive;
     
-    // With Hardcore settings (no auto-clutch), isLocked remains true even at low RPM.
+    // 1. Ignition Check
+    if (nextStarterActive && !nextEngineOn) {
+        const ignitionThreshold = config.engine.starter?.ignitionRPM || 300;
+        if (nextRPM > ignitionThreshold) {
+            nextEngineOn = true;
+            nextStarterActive = false; // Disengage starter
+            nextStalled = false;
+        }
+    }
+
+    // 2. Standard Stall Logic
+    // With Hardcore settings, isLocked remains true even at low RPM.
     // If RPM drops below critical threshold while locked, we stall.
-    if (state.engineOn && !state.stalled && nextRPM < 300 && isLocked) {
+    if (nextEngineOn && !nextStalled && nextRPM < 300 && isLocked) {
         nextStalled = true;
         nextEngineOn = false;
+    }
+
+    // 3. C1 Special: High Gear Idle Stall Logic
+    // If in high gear (>=3), low throttle, and RPM dropping, force stall earlier to prevent infinite cruise
+    if (isC1 && nextEngineOn && Math.abs(gear) >= 3 && state.throttleInput < 0.05 && isLocked) {
+        const idleThreshold = config.engine.idleRPM * 0.8;
+        if (nextRPM < idleThreshold) {
+            nextStalled = true;
+            nextEngineOn = false;
+        }
+    }
+
+    // 4. C1 Special: Reverse Shock Logic
+    // If gear direction opposes motion direction at low speed (high speed blocked by GameLoop), force stall
+    if (isC1 && nextEngineOn && isLocked) {
+        const speedDir = Math.sign(localVelocity.x);
+        const gearDir = Math.sign(gear); // -1 for Reverse
+        if (gearDir !== 0 && speedDir !== 0 && gearDir !== speedDir && Math.abs(localVelocity.x) > 0.5) {
+             // Severe shock -> immediate stall
+             nextStalled = true;
+             nextEngineOn = false;
+        }
     }
 
     // H. Brakes
@@ -224,6 +267,7 @@ export const updatePowertrain = (
         effectiveLongitudinalMass,
         stalled: nextStalled,
         engineOn: nextEngineOn,
+        starterActive: nextStarterActive,
         idleIntegral: nextIdleIntegral,
         brakeTorqueFront: brakes.frontTorque,
         brakeTorqueRear: brakes.rearTorque,

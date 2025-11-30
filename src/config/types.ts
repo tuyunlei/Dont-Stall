@@ -1,6 +1,8 @@
 
 import { Vector2 } from '../physics/types';
 
+export type DrivetrainMode = 'NORMAL' | 'C1_TRAINER';
+
 export interface TorqueCurvePoint {
   rpm: number;
   torque: number;
@@ -16,11 +18,18 @@ export interface AssistConfig {
   automaticClutchRpmRatio?: number;
 }
 
+export interface StarterConfig {
+  torque: number;      // Starter motor torque (Nm)
+  maxRPM: number;      // Max RPM the starter can spin the engine to (free load)
+  ignitionRPM: number; // RPM required to ignite the engine
+}
+
 export interface EngineConfig {
   idleRPM: number;
   redlineRPM: number;
   maxRPM: number;
   inertia: number;
+  starter?: StarterConfig; // Optional starter config
   frictionCoef: { c0: number; c1: number; c2: number; kPump: number }; 
   torqueCurve: TorqueCurvePoint[]; 
   idlePID: { 
@@ -90,6 +99,7 @@ export interface FeelConfig {
 
 export interface CarConfig {
   name: string;
+  drivetrainMode?: DrivetrainMode; // Mode selector
   width: number;
   length: number;
   assists: AssistConfig;

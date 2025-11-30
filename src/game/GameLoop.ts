@@ -69,32 +69,33 @@ export class GameLoop {
         
         // Default env
         const env = level.environment || { gravity: 9.81, slope: 0 };
+        const isC1 = config.drivetrainMode === 'C1_TRAINER';
 
         // 1. Handle Triggers (Discrete Events)
         if (triggers.toggleEngine) {
             if (!this.state.engineOn) {
-                this.state.engineOn = true;
-                this.state.stalled = false;
-                this.state.rpm = config.engine.idleRPM;
-                this.state.idleIntegral = 0;
-                this.deps.callbacks.onMessage('msg.engine_on');
+                // START SEQUENCE
+                if (isC1) {
+                    // C1 Mode: Toggle Starter Motor (Latching button behavior)
+                    this.state.starterActive = !this.state.starterActive;
+                    this.state.stalled = false; // Clear stall flag when attempting to crank
+                } else {
+                    // Normal Mode: Instant Magic Start
+                    this.state.engineOn = true;
+                    this.state.stalled = false;
+                    this.state.rpm = config.engine.idleRPM;
+                    this.state.idleIntegral = 0;
+                    this.deps.callbacks.onMessage('msg.engine_on');
+                }
             } else {
+                // SHUTDOWN SEQUENCE
                 this.state.engineOn = false;
+                this.state.starterActive = false;
                 this.deps.callbacks.onMessage('msg.engine_off');
             }
         }
         
         if (triggers.reset) {
-            // Reset is handled by the consumer calling loop.reset(), 
-            // but we can signal it or handle internal logic if needed.
-            // For now, GameCanvas handles the hard reset via the ref, 
-            // but ideally we should handle it here.
-            // We will let GameCanvas handle the "re-creation" of state for now to keep refactoring scope small,
-            // or we can invoke a callback.
-            // Actually, let's allow the trigger to just signal message, 
-            // the actual reset happens in GameCanvas because it recreates the loop or calls reset.
-            // Wait, logic in GameCanvas was: if trigger reset, do reset.
-            // We should do it here to own the state.
             this.state.position = { ...level.startPos };
             this.state.heading = level.startHeading;
             this.state.velocity = { x: 0, y: 0 };
@@ -103,6 +104,7 @@ export class GameLoop {
             this.state.gear = 0;
             this.state.engineOn = false;
             this.state.stalled = false;
+            this.state.starterActive = false;
             this.state.stoppingState = StoppingState.MOVING;
             this.deps.callbacks.onMessage('msg.reset');
         }
@@ -119,6 +121,17 @@ export class GameLoop {
         if (triggers.shiftDown) {
             if (this.state.clutchPosition > 0.5) {
                 const prevGear = this.state.gear - 1;
+                
+                // REVERSE GEAR PROTECTION (C1 Mode)
+                if (isC1 && prevGear === -1) {
+                    const fwdSpeed = this.state.localVelocity.x;
+                    // Block if moving forward faster than 2 m/s (~7 km/h)
+                    if (fwdSpeed > 2.0) {
+                        this.deps.callbacks.onMessage('msg.reverse_block');
+                        return; // ABORT SHIFT
+                    }
+                }
+
                 if (prevGear >= -1) this.state.gear = prevGear;
             } else {
                 this.deps.callbacks.onMessage('msg.clutch_warn');

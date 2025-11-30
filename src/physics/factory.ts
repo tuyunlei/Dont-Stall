@@ -29,6 +29,7 @@ export const createInitialState = (startPos: Vector2, startHeading: number): Phy
         gear: 0,
         engineOn: false,
         stalled: false,
+        starterActive: false,
         isClutchLocked: false,
         currentEffectiveMass: 0,
 

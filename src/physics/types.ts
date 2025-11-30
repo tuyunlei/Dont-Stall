@@ -54,6 +54,7 @@ export interface PhysicsState {
   gear: number;            
   engineOn: boolean;
   stalled: boolean;
+  starterActive: boolean; // New: cranking state
   isClutchLocked: boolean; 
   
   // Smoothing vars
