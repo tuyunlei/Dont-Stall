@@ -3,6 +3,12 @@ import { ControlsConfig } from '../config/types';
 import { PhysicsState, InputState } from './types';
 import { interpolateTable, clamp, exponentialDecay } from '../utils/math';
 
+// Helper: Linearly move current towards target by maxDelta
+const moveTowards = (current: number, target: number, maxDelta: number) => {
+    if (Math.abs(target - current) <= maxDelta) return target;
+    return current + Math.sign(target - current) * maxDelta;
+};
+
 export const processInputs = (
     currentState: PhysicsState,
     config: ControlsConfig, 
@@ -40,15 +46,36 @@ export const processInputs = (
     }
     newState.brakeInput = exponentialDecay(newState.brakeInput, brakeTarget, config.brakeTau, dt);
 
-    // 4. Handbrake
-    let handbrakeTarget = 0.0;
-    if (inputs.handbrakeAnalog !== undefined) {
-        handbrakeTarget = clamp(inputs.handbrakeAnalog, 0, 1);
+    // 4. Handbrake (Mode Dependent)
+    if (config.handbrakeMode === 'RATCHET') {
+        // Toggle logic based on one-shot trigger
+        if (inputs.toggleHandbrake) {
+            newState.handbrakePulled = !newState.handbrakePulled;
+        }
+
+        // Target: 1.0 if pulled, 0.0 if released
+        const ratchetTarget = newState.handbrakePulled ? 1.0 : 0.0;
+        
+        // Linear movement to simulate physical lever travel time
+        const speed = config.handbrakeRatchetSpeed || 3.0;
+        const maxDelta = speed * dt;
+        newState.handbrakeInput = moveTowards(newState.handbrakeInput, ratchetTarget, maxDelta);
+
     } else {
-        handbrakeTarget = inputs.handbrake ? 1.0 : 0.0;
+        // LINEAR Mode (Racing/Drift Style) - Hold to brake
+        let handbrakeTarget = 0.0;
+        if (inputs.handbrakeAnalog !== undefined) {
+            handbrakeTarget = clamp(inputs.handbrakeAnalog, 0, 1);
+        } else {
+            handbrakeTarget = inputs.handbrake ? 1.0 : 0.0;
+        }
+        
+        const handbrakeTau = config.handbrakeTau ?? config.brakeTau;
+        newState.handbrakeInput = exponentialDecay(newState.handbrakeInput, handbrakeTarget, handbrakeTau, dt);
+        
+        // Update logical state for UI visualization
+        newState.handbrakePulled = newState.handbrakeInput > 0.1;
     }
-    const handbrakeTau = config.handbrakeTau ?? config.brakeTau;
-    newState.handbrakeInput = exponentialDecay(newState.handbrakeInput, handbrakeTarget, handbrakeTau, dt);
 
     // 5. Steering
     const absSpeed = Math.abs(currentSpeed);

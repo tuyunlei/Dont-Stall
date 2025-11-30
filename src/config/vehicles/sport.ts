@@ -64,6 +64,8 @@ export const SPORT: CarConfig = {
       brakeTau: 0.02,
       clutchTau: 0.05,
       handbrakeTau: 0.03,
+      handbrakeMode: 'LINEAR', // Drifting style
+      handbrakeRatchetSpeed: 5.0,
       steeringReturnTau: 0.1,
       steeringCurve: [
         { speed: 0, tau: 0.05 },

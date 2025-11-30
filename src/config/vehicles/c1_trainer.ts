@@ -75,6 +75,8 @@ export const C1_TRAINER: CarConfig = {
       brakeTau: 0.03,    // Faster brake response
       clutchTau: 0.05,   // Much faster clutch response
       handbrakeTau: 0.05,
+      handbrakeMode: 'RATCHET',
+      handbrakeRatchetSpeed: 3.0,
       steeringReturnTau: 0.25,
       steeringCurve: [
           { speed: 0, tau: 0.12 },

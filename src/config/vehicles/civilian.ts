@@ -71,6 +71,8 @@ export const CIVILIAN: CarConfig = {
       brakeTau: 0.05,
       clutchTau: 0.1,
       handbrakeTau: 0.05,
+      handbrakeMode: 'RATCHET',
+      handbrakeRatchetSpeed: 3.0,
       steeringReturnTau: 0.2,
       steeringCurve: [
           { speed: 0, tau: 0.1 },

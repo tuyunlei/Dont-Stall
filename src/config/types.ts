@@ -2,6 +2,7 @@
 import { Vector2 } from '../physics/types';
 
 export type DrivetrainMode = 'NORMAL' | 'C1_TRAINER';
+export type HandbrakeMode = 'LINEAR' | 'RATCHET';
 
 export interface TorqueCurvePoint {
   rpm: number;
@@ -87,6 +88,8 @@ export interface ControlsConfig {
   brakeTau: number;
   clutchTau: number;
   handbrakeTau?: number;
+  handbrakeMode: HandbrakeMode;
+  handbrakeRatchetSpeed: number; // Units per second (0-1 range)
   steeringCurve: SteeringCurvePoint[];
   steeringReturnTau: number; 
 }

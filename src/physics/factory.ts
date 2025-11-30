@@ -20,7 +20,8 @@ export const createInitialState = (startPos: Vector2, startHeading: number): Phy
         throttleInput: 0,
         brakeInput: 0,
         clutchPosition: 0,
-        handbrakeInput: 0,
+        handbrakeInput: 1.0,   // Default to engaged
+        handbrakePulled: true, // Default to pulled state
         steeringWheelAngle: 0,
         steerAngle: 0,
 

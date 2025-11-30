@@ -5,6 +5,7 @@ import { CarConfig } from '../../config/types';
 import { lerp } from '../../utils/math';
 import { Gauge } from './dashboard/Gauge';
 import { TelemetryBar } from './dashboard/TelemetryBar';
+import { HandbrakeLever } from './dashboard/HandbrakeLever';
 import { SteeringWheelDisplay } from './dashboard/SteeringWheelDisplay';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -30,7 +31,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
       stalled: state.stalled,
       clutchPosition: state.clutchPosition,
       brakeInput: state.brakeInput,
-      handbrakeInput: state.handbrakeInput,
+      // Direct pass for handbrake to ensure instant visual feedback for ratchet animations
+      handbrakeInput: state.handbrakeInput, 
       throttleInput: state.throttleInput,
   };
   
@@ -60,6 +62,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
   const stallColor = displayState.stalled ? 'bg-red-600 animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]' : (isDark ? 'bg-slate-700' : 'bg-slate-300');
   const gearBorder = isRedlining ? 'bg-red-900/40 border-red-500 animate-pulse' : (isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-300');
   const gearTextDefault = isDark ? 'text-blue-100' : 'text-slate-800';
+
+  const handbrakeMode = config.controls.handbrakeMode;
 
   return (
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-end gap-6 select-none perspective-[500px]">
@@ -100,13 +104,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
         </div>
 
         {/* Input Telemetry */}
-        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 flex gap-4 shadow-xl h-fit transition-colors duration-300">
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 flex gap-4 shadow-xl h-fit transition-colors duration-300 items-end">
             <SteeringWheelDisplay angle={displayState.steeringWheelAngle} isDark={isDark} />
-            <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
-            <TelemetryBar value={displayState.clutchPosition} color="bg-yellow-500" label={t('dash.clutch')} isDark={isDark} />
-            <TelemetryBar value={displayState.brakeInput} color="bg-red-500" label={t('dash.brake')} isDark={isDark} />
-            <TelemetryBar value={displayState.handbrakeInput} color="bg-orange-500" label={t('dash.handbrake')} isDark={isDark} />
-            <TelemetryBar value={displayState.throttleInput} color="bg-green-500" label={t('dash.throttle')} isDark={isDark} />
+            
+            <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1 h-32 self-center"></div>
+            
+            {/* Pedals Group (Clutch, Brake, Throttle) */}
+            <div className="flex gap-2 items-end">
+                <TelemetryBar value={displayState.clutchPosition} color="bg-yellow-500" label={t('dash.clutch')} isDark={isDark} />
+                <TelemetryBar value={displayState.brakeInput} color="bg-red-500" label={t('dash.brake')} isDark={isDark} />
+                <TelemetryBar value={displayState.throttleInput} color="bg-green-500" label={t('dash.throttle')} isDark={isDark} />
+            </div>
+
+            {/* Separator for Handbrake */}
+            <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1 h-20 self-end opacity-50"></div>
+
+            {/* Handbrake Group (Independent) */}
+            <div className="flex items-end pl-1">
+                {handbrakeMode === 'RATCHET' ? (
+                    <HandbrakeLever value={displayState.handbrakeInput} isDark={isDark} />
+                ) : (
+                    <TelemetryBar value={displayState.handbrakeInput} color="bg-orange-500" label={t('dash.handbrake')} isDark={isDark} />
+                )}
+            </div>
         </div>
     </div>
   );

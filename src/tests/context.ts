@@ -42,6 +42,11 @@ export class ScenarioContext {
     this.state = createInitialState({ x: 0, y: 0 }, 0);
     // Overrides for specific test needs
     this.state.clutchPosition = 1.0; 
+    
+    // Ensure handbrake is off for standard driving tests (unless the test explicitly engages it)
+    // Most scenarios assume the car is ready to drive.
+    this.state.handbrakeInput = 0;
+    this.state.handbrakePulled = false;
   }
 
   log(message: string, data?: Record<string, any>, l10n?: { key: string; params?: any }) {

@@ -19,6 +19,9 @@ export interface InputState {
     clutch: boolean;
     handbrake?: boolean;
 
+    // Triggers (One-shot events for Ratchet mode)
+    toggleHandbrake?: boolean;
+
     // Analog Channels (0.0 - 1.0, Optional)
     // If provided, these take precedence over digital channels
     throttleAnalog?: number;
@@ -49,6 +52,7 @@ export interface PhysicsState {
   brakeInput: number;      
   clutchPosition: number;
   handbrakeInput: number;
+  handbrakePulled: boolean; // Logical state (Up/Down) for ratchet mode
   steeringWheelAngle: number; 
   steerAngle: number;      
 

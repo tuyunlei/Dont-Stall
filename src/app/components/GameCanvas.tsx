@@ -22,6 +22,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<GameLoop | null>(null);
   
+  // Throttle Control
+  const lastUiUpdateRef = useRef<number>(0);
+  const UI_UPDATE_INTERVAL = 33; // ~30 FPS for React UI updates
+
   const { t } = useLanguage();
   const { isDark } = useTheme();
   
@@ -48,7 +52,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
         getTriggers: () => consumeTriggers(),
         callbacks: {
             onTick: (newState) => {
-                // Rendering
+                // Rendering (Canvas) - Runs as fast as possible (e.g. 60+ FPS)
                 renderService.clear();
                 renderService.setupCamera(newState.position);
                 renderService.drawGrid(newState.position);
@@ -56,8 +60,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig }
                 renderService.drawCar(newState, carConfig);
                 renderService.restoreCamera();
 
-                // UI Sync
-                setDashboardState({...newState});
+                // UI Sync (React State) - Throttled to prevent thread blocking
+                const now = performance.now();
+                if (now - lastUiUpdateRef.current >= UI_UPDATE_INTERVAL) {
+                    setDashboardState({...newState});
+                    lastUiUpdateRef.current = now;
+                }
             },
             onMessage: (msgKey) => {
                 setMessage(t(msgKey));

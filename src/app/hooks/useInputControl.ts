@@ -42,7 +42,8 @@ export const useInputControl = () => {
         shiftUp: boolean;
         shiftDown: boolean;
         reset: boolean;
-    }>({ toggleEngine: false, shiftUp: false, shiftDown: false, reset: false });
+        toggleHandbrake: boolean;
+    }>({ toggleEngine: false, shiftUp: false, shiftDown: false, reset: false, toggleHandbrake: false });
 
     // Track which physical keys are currently held down to handle the many-to-one logic.
     const heldKeysRef = useRef<Set<string>>(new Set());
@@ -76,7 +77,11 @@ export const useInputControl = () => {
                     case ControlAction.LEFT: inputsRef.current.left = true; break;
                     case ControlAction.RIGHT: inputsRef.current.right = true; break;
                     case ControlAction.CLUTCH: inputsRef.current.clutch = true; break;
-                    case ControlAction.HANDBRAKE: inputsRef.current.handbrake = true; break;
+                    case ControlAction.HANDBRAKE: {
+                        inputsRef.current.handbrake = true;
+                        triggerRefs.current.toggleHandbrake = true;
+                        break;
+                    }
                     // Triggers
                     case ControlAction.START_ENGINE: triggerRefs.current.toggleEngine = true; break;
                     case ControlAction.SHIFT_UP: triggerRefs.current.shiftUp = true; break;
@@ -139,7 +144,8 @@ export const useInputControl = () => {
             toggleEngine: false,
             shiftUp: false,
             shiftDown: false,
-            reset: false
+            reset: false,
+            toggleHandbrake: false
         };
         return triggers;
     };
