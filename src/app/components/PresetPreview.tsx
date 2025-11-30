@@ -13,7 +13,54 @@ interface PresetPreviewProps {
     onDelete?: () => void;
 }
 
-// Helper component for consistent key+label styling
+// --- Layout Configuration Types ---
+
+interface KeySlot {
+    action: ControlAction;
+    colStart: number;
+    colSpan: number;
+    labelKey: string;
+    colorClass?: string;
+    labelColorClass?: string;
+}
+
+type KeyboardRow = KeySlot[];
+type KeyboardLayout = KeyboardRow[];
+
+// --- Layout Configurations ---
+
+/**
+ * WASD Layout Configuration (Grid System)
+ * Grid System: 24 Columns.
+ * Standard Key Width: 4 columns.
+ * Row Stagger: 2 columns (0.5 key width).
+ */
+const WASD_LAYOUT_CONFIG: KeyboardLayout = [
+    // Row 1: Q(Dn) W(Thr) E(Up) R(Rst)
+    [
+        { action: ControlAction.SHIFT_DOWN, labelKey: 'label.shift_down', colStart: 3, colSpan: 4 },
+        { action: ControlAction.THROTTLE, labelKey: 'label.thr', colStart: 7, colSpan: 4, colorClass: 'bg-slate-200 dark:bg-slate-600 border-b-blue-400', labelColorClass: 'text-blue-500' },
+        { action: ControlAction.SHIFT_UP, labelKey: 'label.shift_up', colStart: 11, colSpan: 4 },
+        { action: ControlAction.RESET, labelKey: 'label.reset', colStart: 15, colSpan: 4, colorClass: 'text-red-500' }
+    ],
+    // Row 2: A(Left) S(Brk) D(Rgt) F(Eng)
+    [
+        { action: ControlAction.LEFT, labelKey: 'label.left', colStart: 5, colSpan: 4, colorClass: 'bg-slate-200 dark:bg-slate-600 border-b-blue-400', labelColorClass: 'text-blue-500' },
+        { action: ControlAction.BRAKE, labelKey: 'label.brk', colStart: 9, colSpan: 4, colorClass: 'bg-slate-200 dark:bg-slate-600 border-b-red-400', labelColorClass: 'text-red-500' },
+        { action: ControlAction.RIGHT, labelKey: 'label.right', colStart: 13, colSpan: 4, colorClass: 'bg-slate-200 dark:bg-slate-600 border-b-blue-400', labelColorClass: 'text-blue-500' },
+        { action: ControlAction.START_ENGINE, labelKey: 'label.engine', colStart: 17, colSpan: 4, colorClass: 'text-green-600' }
+    ],
+    // Row 3: Shift(Clutch) Space(Handbrake)
+    [
+        // Shift is wider (~2.25x), starts at col 1
+        { action: ControlAction.CLUTCH, labelKey: 'label.clutch', colStart: 1, colSpan: 9 },
+        // Space takes remaining width
+        { action: ControlAction.HANDBRAKE, labelKey: 'label.handbrake', colStart: 10, colSpan: 14 }
+    ]
+];
+
+// --- Sub-Components ---
+
 const LabeledKey = ({ 
     labelKey, 
     keyLabel, 
@@ -31,65 +78,67 @@ const LabeledKey = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className={`flex flex-col items-center ${widthClass}`}>
-            <KeyCap label={keyLabel} size={size} className={`${colorClass} ${widthClass ? 'w-full' : ''}`} />
-            <span className={`text-[8px] font-bold mt-0.5 uppercase ${labelColorClass} text-center leading-none`}>{t(labelKey)}</span>
+        <div className={`flex flex-col items-center justify-end h-full ${widthClass}`}>
+            <KeyCap label={keyLabel} size={size} className={`${colorClass} w-full`} />
+            <span className={`text-[8px] font-bold mt-1 uppercase ${labelColorClass} text-center leading-none truncate w-full`}>{t(labelKey)}</span>
         </div>
     );
 };
 
-// Visualizer for WASD Layout (Keyboard style)
-const WasdLayout = ({ mapping }: { mapping: KeyMapping }) => {
+// Generic Keyboard Grid Renderer
+const KeyboardPreview = ({ 
+    layout, 
+    mapping 
+}: { 
+    layout: KeyboardLayout; 
+    mapping: KeyMapping 
+}) => {
     const getKey = (action: ControlAction) => mapping[action]?.[0] || '';
 
     return (
-        <div className="flex flex-col gap-2 items-start select-none scale-90 origin-top-left ml-4">
-            {/* Row 1: Q W E R */}
-            <div className="flex gap-2 ml-1">
-                <LabeledKey labelKey="label.shift_down" keyLabel={getKey(ControlAction.SHIFT_DOWN)} />
-                <LabeledKey labelKey="label.thr" keyLabel={getKey(ControlAction.THROTTLE)} colorClass="bg-slate-200 dark:bg-slate-600 border-b-blue-400" labelColorClass="text-blue-500" />
-                <LabeledKey labelKey="label.shift_up" keyLabel={getKey(ControlAction.SHIFT_UP)} />
-                <LabeledKey labelKey="label.reset" keyLabel={getKey(ControlAction.RESET)} colorClass="text-red-500" />
-            </div>
-            
-            {/* Row 2: A S D F (Staggered) */}
-            <div className="flex gap-2 ml-5">
-                <LabeledKey labelKey="label.left" keyLabel={getKey(ControlAction.LEFT)} colorClass="bg-slate-200 dark:bg-slate-600 border-b-blue-400" labelColorClass="text-blue-500" />
-                <LabeledKey labelKey="label.brk" keyLabel={getKey(ControlAction.BRAKE)} colorClass="bg-slate-200 dark:bg-slate-600 border-b-red-400" labelColorClass="text-red-500" />
-                <LabeledKey labelKey="label.right" keyLabel={getKey(ControlAction.RIGHT)} colorClass="bg-slate-200 dark:bg-slate-600 border-b-blue-400" labelColorClass="text-blue-500" />
-                <LabeledKey labelKey="label.engine" keyLabel={getKey(ControlAction.START_ENGINE)} colorClass="text-green-600" />
-            </div>
-
-            {/* Row 3: Shift Space */}
-            <div className="flex gap-2 items-start mt-1">
-                <div className="-ml-3">
-                   <LabeledKey 
-                        labelKey="label.clutch" 
-                        keyLabel={getKey(ControlAction.CLUTCH)} 
-                        size="md" 
-                        widthClass="w-20" 
-                    />
-                </div>
-                <div className="ml-8">
-                     <LabeledKey 
-                        labelKey="label.handbrake" 
-                        keyLabel={getKey(ControlAction.HANDBRAKE)} 
-                        size="md" 
-                        widthClass="w-36" 
-                    />
-                </div>
-            </div>
+        <div 
+            // Removed origin-top to allow centering
+            className="grid gap-x-1.5 gap-y-2 select-none pl-2 py-2 scale-95" 
+            style={{ 
+                // 24-column grid allows for 0.5 unit staggering (Standard key = 4 cols)
+                gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' 
+            }}
+        >
+            {layout.map((row, rowIndex) => 
+                row.map((slot) => (
+                    <div 
+                        key={slot.action}
+                        style={{ 
+                            gridColumnStart: slot.colStart, 
+                            gridColumnEnd: `span ${slot.colSpan}`,
+                            gridRowStart: rowIndex + 1
+                        }}
+                        className="flex justify-center"
+                    >
+                        <LabeledKey 
+                            labelKey={slot.labelKey} 
+                            keyLabel={getKey(slot.action)}
+                            colorClass={slot.colorClass}
+                            labelColorClass={slot.labelColorClass}
+                            widthClass="w-full"
+                            // Use larger size for big keys (Shift/Space)
+                            size={slot.colSpan > 6 ? 'md' : 'sm'}
+                        />
+                    </div>
+                ))
+            )}
         </div>
     );
 };
 
-// Visualizer for Dirt Layout (Split Keyboard style)
+// Visualizer for Dirt Layout (Split Keyboard style) - Kept as specialized layout
 const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
     const getKey = (action: ControlAction) => mapping[action]?.[0] || '';
     const { t } = useLanguage();
 
     return (
-        <div className="flex gap-6 justify-center select-none scale-90 origin-top">
+        // Removed origin-top to allow centering
+        <div className="flex gap-6 justify-center select-none scale-90">
             {/* Left Hand: QWAZSX */}
             <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
@@ -104,14 +153,16 @@ const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
                     <LabeledKey labelKey="label.brk" keyLabel={getKey(ControlAction.BRAKE)} colorClass="bg-slate-200 dark:bg-slate-600 border-b-red-400" labelColorClass="text-red-500" />
                     <LabeledKey labelKey="label.shift_down" keyLabel={getKey(ControlAction.SHIFT_DOWN)} />
                 </div>
-                <div className="text-center text-[9px] text-slate-400 font-bold border-t border-slate-200 dark:border-slate-700 pt-1 mt-1">{t('label.left_hand')}</div>
+                {/* Use mt-auto to push label to bottom, ensuring alignment with right column */}
+                <div className="mt-auto text-center text-[9px] text-slate-400 font-bold border-t border-slate-200 dark:border-slate-700 pt-1 mt-1">{t('label.left_hand')}</div>
             </div>
 
             {/* Divider */}
             <div className="w-px bg-slate-200 dark:bg-slate-700"></div>
 
             {/* Right Hand: L , . */}
-            <div className="flex flex-col gap-2 items-center justify-center">
+            {/* Remove justify-center to allow mt-auto to work properly */}
+            <div className="flex flex-col gap-2 items-center">
                 <div className="flex flex-col items-center mb-1">
                     <LabeledKey labelKey="label.clutch" keyLabel={getKey(ControlAction.CLUTCH)} size="sm" />
                 </div>
@@ -129,7 +180,8 @@ const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
                     />
                 </div>
 
-                <div className="text-center text-[9px] text-slate-400 font-bold border-t border-slate-200 dark:border-slate-700 pt-1 mt-1 w-full">{t('label.right_hand')}</div>
+                {/* Use mt-auto to push label to bottom */}
+                <div className="mt-auto text-center text-[9px] text-slate-400 font-bold border-t border-slate-200 dark:border-slate-700 pt-1 mt-1 w-full">{t('label.right_hand')}</div>
             </div>
         </div>
     );
@@ -140,8 +192,10 @@ export const PresetPreview: React.FC<PresetPreviewProps> = ({ id, name, mapping,
     // Determine which visualizer to use
     let Content = null;
     if (id === 'wasd') {
-        Content = <WasdLayout mapping={mapping} />;
+        // Use new Generic Grid for WASD
+        Content = <KeyboardPreview layout={WASD_LAYOUT_CONFIG} mapping={mapping} />;
     } else if (id === 'dirt') {
+        // Keep specialized layout for Dirt
         Content = <DirtLayout mapping={mapping} />;
     }
 
