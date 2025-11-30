@@ -3,19 +3,22 @@ import React, { useState } from 'react';
 import { GameCanvas } from './components/GameCanvas';
 import { SandboxControls } from './components/SandboxControls';
 import { UnitTests } from './components/UnitTests';
+import { ControlsSettings } from './components/ControlsSettings';
 import { LevelData, GameMode } from '../game/types';
 import { CarConfig } from '../config/types';
 import { LEVELS } from '../config/levels';
 import { DEFAULT_CAR_CONFIG } from '../config/cars';
 import { useLanguage } from './contexts/LanguageContext';
 import { useTheme } from './contexts/ThemeContext';
+import { ControlsProvider } from './contexts/ControlsContext';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState<LevelData>(LEVELS[0]);
   const [gameMode, setGameMode] = useState<GameMode>(GameMode.LEVELS);
   const [carConfig, setCarConfig] = useState<CarConfig>(DEFAULT_CAR_CONFIG);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showTests, setShowTests] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -33,6 +36,11 @@ const App: React.FC = () => {
 
   const openTests = () => {
       setShowTests(true);
+      setIsMenuOpen(false);
+  };
+
+  const openControls = () => {
+      setShowControls(true);
       setIsMenuOpen(false);
   };
 
@@ -147,6 +155,22 @@ const App: React.FC = () => {
                             </p>
                         </button>
 
+                        {/* Controls Settings Card */}
+                         <button 
+                             onClick={openControls}
+                             className="group text-left p-6 rounded-xl border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-750 hover:border-orange-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                            </div>
+                            <h3 className="text-lg font-bold mb-2 text-slate-800 dark:text-orange-100 flex items-center gap-2">
+                                {t('controls.title')}
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                {t('controls.desc')}
+                            </p>
+                        </button>
+
                         {/* Unit Tests Card */}
                         <button 
                              onClick={openTests}
@@ -179,7 +203,7 @@ const App: React.FC = () => {
                             <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2">{t('help.advanced')}</h4>
                             <div className="grid grid-cols-2 gap-2 font-mono">
                                 <span>{t('key.shift')}</span>
-                                <span>{t('key.engine')}</span>
+                                <span>{t('key.start_engine')}</span>
                                 <span>{t('key.reset')}</span>
                             </div>
                         </div>
@@ -190,6 +214,9 @@ const App: React.FC = () => {
 
         {/* Unit Tests Overlay */}
         {showTests && <UnitTests onClose={() => setShowTests(false)} />}
+        
+        {/* Controls Settings Overlay */}
+        {showControls && <ControlsSettings onClose={() => setShowControls(false)} />}
 
         {/* Main Canvas Area */}
         <div className="w-full h-full pt-16 relative">
@@ -208,5 +235,13 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => {
+    return (
+        <ControlsProvider>
+            <AppContent />
+        </ControlsProvider>
+    );
+}
 
 export default App;
