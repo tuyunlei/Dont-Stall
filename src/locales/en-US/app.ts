@@ -27,6 +27,33 @@ export const app = {
   'controls.listening': 'Press Key...',
   'controls.unbound': 'Unbound',
 
+  'controls.system_presets': 'System Presets',
+  'controls.user_presets': 'User Presets',
+  'controls.empty_custom': 'No custom presets yet.\nModify keys to create one.',
+  'controls.using_saved': 'Using saved preset configuration.',
+  'controls.unsaved_changes': 'You have unsaved changes.',
+  'controls.modified': 'MODIFIED',
+
+  'preset.wasd': 'WASD Layout',
+  'preset.dirt': 'Dirt Rally Style',
+
+  'controls.group.movement': 'Movement',
+  'controls.group.transmission': 'Transmission',
+  'controls.group.functions': 'Functions',
+
+  'label.thr': 'THR',
+  'label.brk': 'BRK',
+  'label.left': 'LFT',
+  'label.right': 'RGT',
+  'label.clutch': 'CLUTCH',
+  'label.handbrake': 'H-BRAKE',
+  'label.shift_up': 'UP',
+  'label.shift_down': 'DN',
+  'label.engine': 'ENG',
+  'label.reset': 'RST',
+  'label.left_hand': 'LEFT HAND',
+  'label.right_hand': 'RIGHT HAND',
+
   'help.basic': 'Basic Controls',
   'help.advanced': 'Advanced Controls',
   'key.throttle': 'Throttle',

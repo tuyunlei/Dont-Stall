@@ -50,12 +50,12 @@ export const DEFAULT_MAPPING_DIRT: KeyMapping = {
 export const DEFAULT_PRESETS: ControlPreset[] = [
   {
     id: 'wasd',
-    name: 'WASD Layout',
+    name: 'preset.wasd',
     mapping: DEFAULT_MAPPING_WASD
   },
   {
     id: 'dirt',
-    name: 'Dirt Rally Style',
+    name: 'preset.dirt',
     mapping: DEFAULT_MAPPING_DIRT
   }
 ];

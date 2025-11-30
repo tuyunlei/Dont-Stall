@@ -26,6 +26,33 @@ export const app = {
   'controls.add': '+ 添加按键',
   'controls.listening': '请按下按键...',
   'controls.unbound': '未绑定',
+  
+  'controls.system_presets': '系统预设',
+  'controls.user_presets': '用户预设',
+  'controls.empty_custom': '暂无自定义预设。\n修改按键以创建。',
+  'controls.using_saved': '正在使用已保存的配置。',
+  'controls.unsaved_changes': '您有未保存的更改。',
+  'controls.modified': '已修改',
+
+  'preset.wasd': 'WASD 布局',
+  'preset.dirt': '尘埃拉力赛风格',
+
+  'controls.group.movement': '车辆移动',
+  'controls.group.transmission': '传动控制',
+  'controls.group.functions': '车辆功能',
+
+  'label.thr': '油门',
+  'label.brk': '刹车',
+  'label.left': '左转',
+  'label.right': '右转',
+  'label.clutch': '离合',
+  'label.handbrake': '手刹',
+  'label.shift_up': '升档',
+  'label.shift_down': '降档',
+  'label.engine': '引擎',
+  'label.reset': '重置',
+  'label.left_hand': '左手控制区',
+  'label.right_hand': '右手控制区',
 
   'help.basic': '基础操作',
   'help.advanced': '进阶操作',
