@@ -56,6 +56,7 @@ export interface TransmissionConfig {
 export interface BrakesConfig {
   maxBrakeTorque: number;   
   brakeBias: number;        
+  handbrakeRearMaxTorque?: number;
 }
 
 export interface SteeringCurvePoint {
@@ -85,6 +86,7 @@ export interface ControlsConfig {
   throttleTau: number; 
   brakeTau: number;
   clutchTau: number;
+  handbrakeTau?: number;
   steeringCurve: SteeringCurvePoint[];
   steeringReturnTau: number; 
 }

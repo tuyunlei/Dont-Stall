@@ -47,6 +47,7 @@ export const CIVILIAN: CarConfig = {
     brakes: {
       maxBrakeTorque: 4000,
       brakeBias: 0.65,
+      handbrakeRearMaxTorque: 4000,
     },
     chassis: {
       mass: 1300,
@@ -69,6 +70,7 @@ export const CIVILIAN: CarConfig = {
       throttleTau: 0.05,
       brakeTau: 0.05,
       clutchTau: 0.1,
+      handbrakeTau: 0.05,
       steeringReturnTau: 0.2,
       steeringCurve: [
           { speed: 0, tau: 0.1 },

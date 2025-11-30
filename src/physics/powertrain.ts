@@ -259,7 +259,7 @@ export const updatePowertrain = (
     }
 
     // H. Brakes
-    const brakes = calculateBrakeTorques(state.brakeInput, config.brakes);
+    const brakes = calculateBrakeTorques(state.brakeInput, state.handbrakeInput, config.brakes);
 
     return {
         rpm: nextRPM,

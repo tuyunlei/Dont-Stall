@@ -17,12 +17,14 @@ export interface InputState {
     left: boolean;
     right: boolean;
     clutch: boolean;
+    handbrake?: boolean;
 
     // Analog Channels (0.0 - 1.0, Optional)
     // If provided, these take precedence over digital channels
     throttleAnalog?: number;
     brakeAnalog?: number;
     clutchAnalog?: number;
+    handbrakeAnalog?: number;
     steeringAnalog?: number; // -1.0 (Left) to 1.0 (Right)
 }
 
@@ -45,7 +47,8 @@ export interface PhysicsState {
   // Input State (Processed)
   throttleInput: number;   
   brakeInput: number;      
-  clutchPosition: number;  
+  clutchPosition: number;
+  handbrakeInput: number;
   steeringWheelAngle: number; 
   steerAngle: number;      
 

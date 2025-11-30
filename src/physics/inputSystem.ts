@@ -47,7 +47,17 @@ export const processInputs = (
     }
     newState.brakeInput = smoothInput(newState.brakeInput, brakeTarget, config.brakeTau, dt);
 
-    // 4. Steering
+    // 4. Handbrake
+    let handbrakeTarget = 0.0;
+    if (inputs.handbrakeAnalog !== undefined) {
+        handbrakeTarget = clamp(inputs.handbrakeAnalog, 0, 1);
+    } else {
+        handbrakeTarget = inputs.handbrake ? 1.0 : 0.0;
+    }
+    const handbrakeTau = config.handbrakeTau ?? config.brakeTau;
+    newState.handbrakeInput = smoothInput(newState.handbrakeInput, handbrakeTarget, handbrakeTau, dt);
+
+    // 5. Steering
     const absSpeed = Math.abs(currentSpeed);
     const steeringTable = config.steeringCurve.map(p => ({ x: p.speed, y: p.tau }));
     const currentSteerTau = interpolateTable(steeringTable, absSpeed);

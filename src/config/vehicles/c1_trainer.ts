@@ -51,6 +51,7 @@ export const C1_TRAINER: CarConfig = {
     brakes: {
       maxBrakeTorque: 3500,
       brakeBias: 0.65,
+      handbrakeRearMaxTorque: 3500,
     },
     chassis: {
       mass: 1250,
@@ -73,6 +74,7 @@ export const C1_TRAINER: CarConfig = {
       throttleTau: 0.04, // Faster throttle response
       brakeTau: 0.03,    // Faster brake response
       clutchTau: 0.05,   // Much faster clutch response
+      handbrakeTau: 0.05,
       steeringReturnTau: 0.25,
       steeringCurve: [
           { speed: 0, tau: 0.12 },

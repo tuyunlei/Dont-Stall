@@ -21,6 +21,7 @@ export const createInitialState = (startPos: Vector2, startHeading: number): Phy
         throttleInput: 0,
         brakeInput: 0,
         clutchPosition: 0,
+        handbrakeInput: 0,
         steeringWheelAngle: 0,
         steerAngle: 0,
 

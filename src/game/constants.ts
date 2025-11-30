@@ -7,6 +7,7 @@ export const KEYS = {
   LEFT: 'ArrowLeft',
   RIGHT: 'ArrowRight',
   CLUTCH: 'q',
+  HANDBRAKE: ' ',
   SHIFT_UP: 'w',
   SHIFT_DOWN: 's',
   START_ENGINE: 'e',

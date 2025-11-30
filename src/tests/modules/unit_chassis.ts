@@ -18,7 +18,7 @@ export const CHASSIS_TESTS: TestDefinition[] = [
         ],
         run: (ctx: UnitContext) => {
             const config = DEFAULT_CAR_CONFIG.brakes;
-            const res = calculateBrakeTorques(1.0, config);
+            const res = calculateBrakeTorques(1.0, 0.0, config);
             
             ctx.log(
                 `Front: ${res.frontTorque}, Rear: ${res.rearTorque}, Total: ${config.maxBrakeTorque}`,

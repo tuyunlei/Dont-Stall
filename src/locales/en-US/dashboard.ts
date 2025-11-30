@@ -6,6 +6,7 @@ export const dashboard = {
   'dash.steer': 'STEER',
   'dash.clutch': 'CLU',
   'dash.brake': 'BRK',
+  'dash.handbrake': 'H-BRK',
   'dash.throttle': 'THR',
   'dash.engine_status': 'Engine Status',
   'dash.stall_warning': 'Stall Warning',

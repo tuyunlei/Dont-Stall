@@ -9,7 +9,8 @@ export const useInputControl = () => {
         brake: false,
         left: false,
         right: false,
-        clutch: false
+        clutch: false,
+        handbrake: false
     });
 
     const triggerRefs = useRef<{
@@ -21,7 +22,7 @@ export const useInputControl = () => {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ([KEYS.THROTTLE, KEYS.BRAKE, KEYS.LEFT, KEYS.RIGHT].includes(e.key)) {
+            if ([KEYS.THROTTLE, KEYS.BRAKE, KEYS.LEFT, KEYS.RIGHT, KEYS.HANDBRAKE].includes(e.key)) {
                 e.preventDefault();
             }
             switch (e.key) {
@@ -30,6 +31,7 @@ export const useInputControl = () => {
                 case KEYS.LEFT: inputsRef.current.left = true; break;
                 case KEYS.RIGHT: inputsRef.current.right = true; break;
                 case KEYS.CLUTCH: inputsRef.current.clutch = true; break;
+                case KEYS.HANDBRAKE: inputsRef.current.handbrake = true; break;
                 case KEYS.START_ENGINE: triggerRefs.current.toggleEngine = true; break;
                 case KEYS.SHIFT_UP: triggerRefs.current.shiftUp = true; break;
                 case KEYS.SHIFT_DOWN: triggerRefs.current.shiftDown = true; break;
@@ -44,6 +46,7 @@ export const useInputControl = () => {
                 case KEYS.LEFT: inputsRef.current.left = false; break;
                 case KEYS.RIGHT: inputsRef.current.right = false; break;
                 case KEYS.CLUTCH: inputsRef.current.clutch = false; break;
+                case KEYS.HANDBRAKE: inputsRef.current.handbrake = false; break;
             }
         };
 
@@ -53,7 +56,8 @@ export const useInputControl = () => {
                 brake: false,
                 left: false,
                 right: false,
-                clutch: false
+                clutch: false,
+                handbrake: false
             };
         };
 

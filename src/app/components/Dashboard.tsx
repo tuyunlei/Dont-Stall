@@ -30,6 +30,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
       stalled: state.stalled,
       clutchPosition: state.clutchPosition,
       brakeInput: state.brakeInput,
+      handbrakeInput: state.handbrakeInput,
       throttleInput: state.throttleInput,
   };
   
@@ -104,6 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
             <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
             <TelemetryBar value={displayState.clutchPosition} color="bg-yellow-500" label={t('dash.clutch')} isDark={isDark} />
             <TelemetryBar value={displayState.brakeInput} color="bg-red-500" label={t('dash.brake')} isDark={isDark} />
+            <TelemetryBar value={displayState.handbrakeInput} color="bg-orange-500" label={t('dash.handbrake')} isDark={isDark} />
             <TelemetryBar value={displayState.throttleInput} color="bg-green-500" label={t('dash.throttle')} isDark={isDark} />
         </div>
     </div>

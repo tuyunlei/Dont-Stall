@@ -6,6 +6,7 @@ export const dashboard = {
   'dash.steer': '转向',
   'dash.clutch': '离合',
   'dash.brake': '刹车',
+  'dash.handbrake': '手刹',
   'dash.throttle': '油门',
   'dash.engine_status': '引擎状态',
   'dash.stall_warning': '熄火警告',

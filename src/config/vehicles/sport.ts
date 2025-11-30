@@ -40,6 +40,7 @@ export const SPORT: CarConfig = {
     brakes: {
       maxBrakeTorque: 6000,
       brakeBias: 0.60,
+      handbrakeRearMaxTorque: 6000,
     },
     chassis: {
       mass: 1400,
@@ -62,6 +63,7 @@ export const SPORT: CarConfig = {
       throttleTau: 0.03,
       brakeTau: 0.02,
       clutchTau: 0.05,
+      handbrakeTau: 0.03,
       steeringReturnTau: 0.1,
       steeringCurve: [
         { speed: 0, tau: 0.05 },
