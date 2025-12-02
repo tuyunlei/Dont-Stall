@@ -137,7 +137,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ level, mode, carConfig, 
             // BLOCK TRIGGERS if Lesson Ended (Prevent 'R' reset or engine toggle)
             if (activeLesson && (lessonStatus === 'success' || lessonStatus === 'failed')) {
                 consumeTriggers(); // Consume to clear buffer, but return empty
-                return { toggleEngine: false, shiftUp: false, shiftDown: false, reset: false, toggleHandbrake: false };
+                return { 
+                    toggleEngine: false, shiftUp: false, shiftDown: false, reset: false, toggleHandbrake: false,
+                    setVirtualThrottleFull: false, setVirtualThrottleZero: false,
+                    setVirtualBrakeFull: false, setVirtualBrakeZero: false,
+                    setVirtualClutchFull: false, setVirtualClutchZero: false,
+                    setVirtualSteeringLeftFull: false, setVirtualSteeringRightFull: false
+                };
             }
             return consumeTriggers();
         },

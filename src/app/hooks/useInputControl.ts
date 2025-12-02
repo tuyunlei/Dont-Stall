@@ -16,12 +16,34 @@ const generateKeyMap = (mapping: KeyMapping): Record<string, ControlAction[]> =>
     return map;
 };
 
+// Helper to generate consistent key string (e.g., "Shift+KeyW")
+// FIX: Added logic to prevent "Shift+ShiftLeft" redundancy
+const getEventKeyString = (e: KeyboardEvent): string => {
+    const isShift = e.code === 'ShiftLeft' || e.code === 'ShiftRight';
+    const isCtrl = e.code === 'ControlLeft' || e.code === 'ControlRight';
+    const isAlt = e.code === 'AltLeft' || e.code === 'AltRight';
+
+    const parts = [];
+    // Only add modifier prefix if the key itself isn't that modifier
+    if (e.shiftKey && !isShift) parts.push('Shift');
+    if (e.ctrlKey && !isCtrl) parts.push('Ctrl');
+    if (e.altKey && !isAlt) parts.push('Alt');
+    
+    parts.push(e.code);
+    return parts.join('+');
+};
+
+const DOUBLE_TAP_THRESHOLD_MS = 250;
+
 export const useInputControl = () => {
     const { currentMapping } = useControls();
     
     // We use a Ref for the mapping to access the latest version inside the event listener
     const mappingRef = useRef(currentMapping);
     const keyLookupRef = useRef(generateKeyMap(currentMapping));
+
+    // Track last press time for double-tap detection
+    const lastPressTimeRef = useRef<Map<ControlAction, number>>(new Map());
 
     useEffect(() => {
         mappingRef.current = currentMapping;
@@ -34,7 +56,12 @@ export const useInputControl = () => {
         left: false,
         right: false,
         clutch: false,
-        handbrake: false
+        handbrake: false,
+        // Virtual Init
+        throttleInc: false, throttleDec: false,
+        brakeInc: false, brakeDec: false,
+        clutchInc: false, clutchDec: false,
+        steerLeftInc: false, steerRightInc: false
     });
 
     const triggerRefs = useRef<{
@@ -43,88 +70,148 @@ export const useInputControl = () => {
         shiftDown: boolean;
         reset: boolean;
         toggleHandbrake: boolean;
-    }>({ toggleEngine: false, shiftUp: false, shiftDown: false, reset: false, toggleHandbrake: false });
-
-    // Track which physical keys are currently held down to handle the many-to-one logic.
-    const heldKeysRef = useRef<Set<string>>(new Set());
+        
+        // Virtual Shortcuts
+        setVirtualThrottleFull: boolean;
+        setVirtualThrottleZero: boolean;
+        setVirtualBrakeFull: boolean;
+        setVirtualBrakeZero: boolean;
+        setVirtualClutchFull: boolean;
+        setVirtualClutchZero: boolean;
+        setVirtualSteeringLeftFull: boolean;
+        setVirtualSteeringRightFull: boolean;
+    }>({ 
+        toggleEngine: false, shiftUp: false, shiftDown: false, reset: false, toggleHandbrake: false,
+        setVirtualThrottleFull: false, setVirtualThrottleZero: false,
+        setVirtualBrakeFull: false, setVirtualBrakeZero: false,
+        setVirtualClutchFull: false, setVirtualClutchZero: false,
+        setVirtualSteeringLeftFull: false, setVirtualSteeringRightFull: false
+    });
 
     useEffect(() => {
+        const updateInputs = (actions: ControlAction[], isDown: boolean, isDoubleTap: boolean = false) => {
+            actions.forEach(action => {
+                switch (action) {
+                    // Digital
+                    case ControlAction.THROTTLE: inputsRef.current.throttle = isDown; break;
+                    case ControlAction.BRAKE: inputsRef.current.brake = isDown; break;
+                    case ControlAction.LEFT: inputsRef.current.left = isDown; break;
+                    case ControlAction.RIGHT: inputsRef.current.right = isDown; break;
+                    case ControlAction.CLUTCH: inputsRef.current.clutch = isDown; break;
+                    case ControlAction.HANDBRAKE: {
+                        inputsRef.current.handbrake = isDown;
+                        if (isDown) triggerRefs.current.toggleHandbrake = true;
+                        break;
+                    }
+                    // Triggers (Only on Down)
+                    case ControlAction.START_ENGINE: if (isDown) triggerRefs.current.toggleEngine = true; break;
+                    case ControlAction.SHIFT_UP: if (isDown) triggerRefs.current.shiftUp = true; break;
+                    case ControlAction.SHIFT_DOWN: if (isDown) triggerRefs.current.shiftDown = true; break;
+                    case ControlAction.RESET: if (isDown) triggerRefs.current.reset = true; break;
+
+                    // Incremental (Virtual Pedals) + Double Tap Logic
+                    case ControlAction.THROTTLE_INC: 
+                        inputsRef.current.throttleInc = isDown;
+                        if (isDoubleTap) triggerRefs.current.setVirtualThrottleFull = true;
+                        break;
+                    case ControlAction.THROTTLE_DEC: 
+                        inputsRef.current.throttleDec = isDown; 
+                        if (isDoubleTap) triggerRefs.current.setVirtualThrottleZero = true;
+                        break;
+                    
+                    case ControlAction.BRAKE_INC: 
+                        inputsRef.current.brakeInc = isDown; 
+                        if (isDoubleTap) triggerRefs.current.setVirtualBrakeFull = true;
+                        break;
+                    case ControlAction.BRAKE_DEC: 
+                        inputsRef.current.brakeDec = isDown; 
+                        if (isDoubleTap) triggerRefs.current.setVirtualBrakeZero = true;
+                        break;
+
+                    case ControlAction.CLUTCH_INC: 
+                        inputsRef.current.clutchInc = isDown; 
+                        if (isDoubleTap) triggerRefs.current.setVirtualClutchFull = true;
+                        break;
+                    case ControlAction.CLUTCH_DEC: 
+                        inputsRef.current.clutchDec = isDown; 
+                        if (isDoubleTap) triggerRefs.current.setVirtualClutchZero = true;
+                        break;
+
+                    case ControlAction.STEER_LEFT_INC:
+                        inputsRef.current.steerLeftInc = isDown;
+                        if (isDoubleTap) triggerRefs.current.setVirtualSteeringLeftFull = true;
+                        break;
+                    case ControlAction.STEER_RIGHT_INC:
+                        inputsRef.current.steerRightInc = isDown;
+                        if (isDoubleTap) triggerRefs.current.setVirtualSteeringRightFull = true;
+                        break;
+                }
+            });
+        };
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.repeat) return;
             
-            const actions = keyLookupRef.current[e.code];
-            if (!actions) return;
+            const comboKey = getEventKeyString(e);
+            
+            // Priority 1: Exact Combo Match (e.g. "Shift+KeyW")
+            let actions = keyLookupRef.current[comboKey];
 
-            // Prevent default for game keys
-            if (actions.some(a => [
-                ControlAction.THROTTLE, 
-                ControlAction.BRAKE, 
-                ControlAction.HANDBRAKE, 
-                ControlAction.LEFT, 
-                ControlAction.RIGHT,
-                ControlAction.SHIFT_UP,
-                ControlAction.SHIFT_DOWN
-            ].includes(a))) {
-                e.preventDefault();
+            // Priority 2: Base Key Match (e.g. "KeyW")
+            if (!actions && comboKey !== e.code) {
+                actions = keyLookupRef.current[e.code];
             }
 
-            heldKeysRef.current.add(e.code);
+            if (!actions) return;
 
-            actions.forEach(action => {
-                switch (action) {
-                    case ControlAction.THROTTLE: inputsRef.current.throttle = true; break;
-                    case ControlAction.BRAKE: inputsRef.current.brake = true; break;
-                    case ControlAction.LEFT: inputsRef.current.left = true; break;
-                    case ControlAction.RIGHT: inputsRef.current.right = true; break;
-                    case ControlAction.CLUTCH: inputsRef.current.clutch = true; break;
-                    case ControlAction.HANDBRAKE: {
-                        inputsRef.current.handbrake = true;
-                        triggerRefs.current.toggleHandbrake = true;
-                        break;
-                    }
-                    // Triggers
-                    case ControlAction.START_ENGINE: triggerRefs.current.toggleEngine = true; break;
-                    case ControlAction.SHIFT_UP: triggerRefs.current.shiftUp = true; break;
-                    case ControlAction.SHIFT_DOWN: triggerRefs.current.shiftDown = true; break;
-                    case ControlAction.RESET: triggerRefs.current.reset = true; break;
+            e.preventDefault();
+
+            // Double Tap Detection
+            const now = performance.now();
+            let isDoubleTap = false;
+            
+            for (const action of actions) {
+                const lastTime = lastPressTimeRef.current.get(action) || 0;
+                if (now - lastTime < DOUBLE_TAP_THRESHOLD_MS) {
+                    isDoubleTap = true;
                 }
-            });
+                lastPressTimeRef.current.set(action, now);
+            }
+
+            updateInputs(actions, true, isDoubleTap);
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            const actions = keyLookupRef.current[e.code];
-            if (!actions) return;
-
-            heldKeysRef.current.delete(e.code);
-
-            actions.forEach(action => {
-                // Before turning off an input, check if ANY OTHER key mapped to this action is still held
-                // This is the core of 1-to-many support (OR logic)
-                const mappedKeys = mappingRef.current[action];
-                const isStillHeld = mappedKeys.some(k => heldKeysRef.current.has(k));
-
-                if (!isStillHeld) {
-                    switch (action) {
-                        case ControlAction.THROTTLE: inputsRef.current.throttle = false; break;
-                        case ControlAction.BRAKE: inputsRef.current.brake = false; break;
-                        case ControlAction.LEFT: inputsRef.current.left = false; break;
-                        case ControlAction.RIGHT: inputsRef.current.right = false; break;
-                        case ControlAction.CLUTCH: inputsRef.current.clutch = false; break;
-                        case ControlAction.HANDBRAKE: inputsRef.current.handbrake = false; break;
-                    }
-                }
-            });
+            const comboKey = getEventKeyString(e);
+            const baseKey = e.code;
+            
+            // On KeyUp, we check both the combo string and the base key.
+            // Since modifier state changes *during* this event (shiftKey becomes false),
+            // getEventKeyString(e) might differ from KeyDown. 
+            // However, with our logic:
+            // KeyDown Shift: code=ShiftLeft, shiftKey=true -> "ShiftLeft"
+            // KeyUp Shift: code=ShiftLeft, shiftKey=false -> "ShiftLeft"
+            // So for single modifiers, it's consistent now.
+            
+            // For Combos (e.g. Shift+W):
+            // KeyDown W: code=KeyW, shiftKey=true -> "Shift+KeyW"
+            // KeyUp W: code=KeyW, shiftKey=true (usually still true) -> "Shift+KeyW"
+            
+            const comboActions = keyLookupRef.current[comboKey];
+            const baseActions = keyLookupRef.current[baseKey];
+            
+            if (comboActions) updateInputs(comboActions, false);
+            if (baseActions && baseActions !== comboActions) updateInputs(baseActions, false);
         };
 
         const handleBlur = () => {
-            heldKeysRef.current.clear();
+            // Safety: Clear all inputs on window blur
             inputsRef.current = {
-                throttle: false,
-                brake: false,
-                left: false,
-                right: false,
-                clutch: false,
-                handbrake: false
+                throttle: false, brake: false, left: false, right: false, clutch: false, handbrake: false,
+                throttleInc: false, throttleDec: false,
+                brakeInc: false, brakeDec: false,
+                clutchInc: false, clutchDec: false,
+                steerLeftInc: false, steerRightInc: false
             };
         };
 
@@ -140,12 +227,17 @@ export const useInputControl = () => {
 
     const consumeTriggers = () => {
         const triggers = { ...triggerRefs.current };
+        // Reset triggers
         triggerRefs.current = {
             toggleEngine: false,
             shiftUp: false,
             shiftDown: false,
             reset: false,
-            toggleHandbrake: false
+            toggleHandbrake: false,
+            setVirtualThrottleFull: false, setVirtualThrottleZero: false,
+            setVirtualBrakeFull: false, setVirtualBrakeZero: false,
+            setVirtualClutchFull: false, setVirtualClutchZero: false,
+            setVirtualSteeringLeftFull: false, setVirtualSteeringRightFull: false
         };
         return triggers;
     };

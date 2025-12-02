@@ -35,12 +35,17 @@ export const app = {
   'controls.unsaved_changes': 'You have unsaved changes.',
   'controls.modified': 'MODIFIED',
 
+  'controls.hint.double_tap': 'Double-tap keys to instantly set MAX/MIN value',
+
   'preset.wasd': 'WASD Layout',
   'preset.dirt': 'Dirt Rally Style',
 
-  'controls.group.movement': 'Movement',
-  'controls.group.transmission': 'Transmission',
-  'controls.group.functions': 'Functions',
+  // UI Groupings
+  'controls.group.steering': 'Steering Controls',
+  'controls.group.throttle': 'Throttle Controls',
+  'controls.group.brake': 'Brake Controls',
+  'controls.group.clutch': 'Clutch Controls',
+  'controls.group.functions': 'Vehicle Functions',
 
   'label.thr': 'THR',
   'label.brk': 'BRK',
@@ -54,15 +59,19 @@ export const app = {
   'label.reset': 'RST',
   'label.left_hand': 'LEFT HAND',
   'label.right_hand': 'RIGHT HAND',
+  
+  'label.thr_inc': 'Thr +',
+  'label.thr_dec': 'Thr -',
+  'label.thr_full': 'FLOOR IT',
 
   'help.basic': 'Basic Controls',
   'help.advanced': 'Advanced Controls',
-  'key.throttle': 'Throttle',
-  'key.brake': 'Brake',
+  'key.throttle': 'Throttle (Full)',
+  'key.brake': 'Brake (Full)',
   'key.left': 'Steer Left',
   'key.right': 'Steer Right',
   'key.steer': 'Steering',
-  'key.clutch': 'Clutch',
+  'key.clutch': 'Clutch (Press)',
   'key.handbrake': 'Handbrake',
   'key.shift': 'Shift Gear',
   'key.shift_up': 'Shift Up',
@@ -70,4 +79,16 @@ export const app = {
   'key.engine': 'Engine Toggle',
   'key.start_engine': 'Start Engine',
   'key.reset': 'Reset Car',
+
+  'key.throttle_inc': 'Throttle (+)',
+  'key.throttle_dec': 'Throttle (-)',
+
+  'key.brake_inc': 'Brake (+)',
+  'key.brake_dec': 'Brake (-)',
+
+  'key.clutch_inc': 'Clutch (+)',
+  'key.clutch_dec': 'Clutch (-)',
+
+  'key.steer_left_inc': 'Steer Left (Trim)',
+  'key.steer_right_inc': 'Steer Right (Trim)',
 };

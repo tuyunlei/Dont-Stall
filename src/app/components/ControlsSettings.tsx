@@ -30,6 +30,32 @@ export const ControlsSettings: React.FC<ControlsSettingsProps> = ({ onClose }) =
     useEffect(() => {
         if (!listeningAction) return;
 
+        const isModifierKey = (code: string) => 
+            code.startsWith('Shift') || code.startsWith('Control') || code.startsWith('Alt');
+
+        // Logic duplicated from useInputControl to ensure consistency
+        const getEventKeyString = (e: KeyboardEvent): string => {
+            const isShift = e.code === 'ShiftLeft' || e.code === 'ShiftRight';
+            const isCtrl = e.code === 'ControlLeft' || e.code === 'ControlRight';
+            const isAlt = e.code === 'AltLeft' || e.code === 'AltRight';
+
+            const parts = [];
+            if (e.shiftKey && !isShift) parts.push('Shift');
+            if (e.ctrlKey && !isCtrl) parts.push('Ctrl');
+            if (e.altKey && !isAlt) parts.push('Alt');
+            parts.push(e.code);
+            return parts.join('+');
+        };
+
+        const bindKey = (keyString: string) => {
+            const currentKeys = currentMapping[listeningAction];
+            // Don't add if already exists
+            if (!currentKeys.includes(keyString)) {
+                updateBinding(listeningAction, [...currentKeys, keyString]);
+            }
+            setListeningAction(null);
+        };
+
         const handleKeyDown = (e: KeyboardEvent) => {
             e.preventDefault();
             e.stopPropagation();
@@ -39,16 +65,32 @@ export const ControlsSettings: React.FC<ControlsSettingsProps> = ({ onClose }) =
                 return;
             }
 
-            const currentKeys = currentMapping[listeningAction];
-            // Don't add if already exists in this specific action mapping
-            if (!currentKeys.includes(e.code)) {
-                updateBinding(listeningAction, [...currentKeys, e.code]);
+            // Strategy: 
+            // 1. If it's a regular key (e.g. W), bind immediately (capture held modifiers).
+            // 2. If it's a modifier key (e.g. Shift), ignore KeyDown to allow user to press a second key.
+            if (!isModifierKey(e.code)) {
+                bindKey(getEventKeyString(e));
             }
-            setListeningAction(null);
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Strategy:
+            // 3. If a modifier key is RELEASED and we are still listening, it means the user
+            //    probably wanted to bind just that modifier key (e.g. bind Shift for Clutch).
+            if (isModifierKey(e.code)) {
+                bindKey(getEventKeyString(e));
+            }
         };
 
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
     }, [listeningAction, currentMapping, updateBinding]);
 
     const handleRemoveKey = (action: ControlAction, keyToRemove: string) => {
@@ -67,15 +109,31 @@ export const ControlsSettings: React.FC<ControlsSettingsProps> = ({ onClose }) =
     const systemPresets = presets.filter(p => !p.isCustom);
     const customPresets = presets.filter(p => p.isCustom);
 
-    // Define logical groups for the list view
+    // Group keys logically as requested
     const groups = [
         {
-            label: t('controls.group.movement'),
-            actions: [ControlAction.THROTTLE, ControlAction.BRAKE, ControlAction.LEFT, ControlAction.RIGHT]
+            label: t('controls.group.steering'),
+            actions: [ControlAction.LEFT, ControlAction.RIGHT, ControlAction.STEER_LEFT_INC, ControlAction.STEER_RIGHT_INC],
+            hint: true // For double tap hint
+        },
+        {
+            label: t('controls.group.throttle'),
+            actions: [ControlAction.THROTTLE, ControlAction.THROTTLE_INC, ControlAction.THROTTLE_DEC],
+            hint: true
+        },
+        {
+            label: t('controls.group.brake'),
+            actions: [ControlAction.BRAKE, ControlAction.BRAKE_INC, ControlAction.BRAKE_DEC],
+            hint: true
+        },
+        {
+            label: t('controls.group.clutch'),
+            actions: [ControlAction.CLUTCH, ControlAction.CLUTCH_INC, ControlAction.CLUTCH_DEC],
+            hint: true
         },
         {
             label: t('controls.group.transmission'),
-            actions: [ControlAction.SHIFT_UP, ControlAction.SHIFT_DOWN, ControlAction.CLUTCH]
+            actions: [ControlAction.SHIFT_UP, ControlAction.SHIFT_DOWN]
         },
         {
             label: t('controls.group.functions'),
@@ -207,14 +265,26 @@ export const ControlsSettings: React.FC<ControlsSettingsProps> = ({ onClose }) =
                         <div className="space-y-8">
                             {groups.map((group) => (
                                 <div key={group.label}>
-                                    <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800 pb-2 mb-4">
-                                        {group.label}
-                                    </h4>
+                                    <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-4">
+                                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                            {group.label}
+                                        </h4>
+                                        {group.hint && (
+                                            <div className="group/hint relative ml-auto cursor-help">
+                                                <svg className="w-4 h-4 text-slate-400 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-slate-800 text-slate-200 text-xs rounded shadow-lg pointer-events-none opacity-0 group-hover/hint:opacity-100 transition-opacity z-10">
+                                                    {t('controls.hint.double_tap')}
+                                                    <div className="absolute right-1 top-full border-4 border-transparent border-t-slate-800"></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="grid grid-cols-1 gap-3">
                                         {group.actions.map(action => (
                                             <div key={action} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 hover:border-blue-300 dark:hover:border-slate-600 transition-colors group">
                                                 <span className="font-medium text-sm text-slate-700 dark:text-slate-300 pl-1">
-                                                    {t(`key.${action.toLowerCase()}`)}
+                                                    {/* Fallback translation for new keys if missing */}
+                                                    {t(`key.${action.toLowerCase()}`) !== `key.${action.toLowerCase()}` ? t(`key.${action.toLowerCase()}`) : action}
                                                 </span>
                                                 
                                                 <div className="flex items-center gap-2 flex-wrap justify-end">

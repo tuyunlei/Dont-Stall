@@ -35,12 +35,17 @@ export const app = {
   'controls.unsaved_changes': '您有未保存的更改。',
   'controls.modified': '已修改',
 
+  'controls.hint.double_tap': '快速双击按键可直接设为最大/最小值',
+
   'preset.wasd': 'WASD 布局',
   'preset.dirt': '尘埃拉力赛风格',
 
-  'controls.group.movement': '车辆移动',
-  'controls.group.transmission': '传动控制',
-  'controls.group.functions': '车辆功能',
+  // UI Groupings
+  'controls.group.steering': '转向控制',
+  'controls.group.throttle': '油门控制',
+  'controls.group.brake': '刹车控制',
+  'controls.group.clutch': '离合控制',
+  'controls.group.functions': '其他功能',
 
   'label.thr': '油门',
   'label.brk': '刹车',
@@ -54,15 +59,19 @@ export const app = {
   'label.reset': '重置',
   'label.left_hand': '左手控制区',
   'label.right_hand': '右手控制区',
+  
+  'label.thr_inc': '油门 (+)',
+  'label.thr_dec': '油门 (-)',
+  'label.thr_full': '地板油',
 
   'help.basic': '基础操作',
   'help.advanced': '进阶操作',
-  'key.throttle': '油门',
-  'key.brake': '刹车',
+  'key.throttle': '油门 (全开)',
+  'key.brake': '刹车 (全开)',
   'key.left': '左转',
   'key.right': '右转',
   'key.steer': '转向',
-  'key.clutch': '离合器',
+  'key.clutch': '离合器 (踩下)',
   'key.handbrake': '手刹',
   'key.shift': '升降档',
   'key.shift_up': '升档',
@@ -70,4 +79,16 @@ export const app = {
   'key.engine': '引擎开关',
   'key.start_engine': '引擎启动',
   'key.reset': '重置车辆',
+
+  'key.throttle_inc': '油门 (+)',
+  'key.throttle_dec': '油门 (-)',
+
+  'key.brake_inc': '刹车 (+)',
+  'key.brake_dec': '刹车 (-)',
+
+  'key.clutch_inc': '离合 (+)',
+  'key.clutch_dec': '离合 (-)',
+
+  'key.steer_left_inc': '左转 (微调)',
+  'key.steer_right_inc': '右转 (微调)',
 };

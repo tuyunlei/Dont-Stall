@@ -17,7 +17,23 @@ export interface GameLoopDeps {
     getLevel: () => LevelData;
     getConfig: () => CarConfig;
     getInputs: () => InputState;
-    getTriggers: () => { toggleEngine: boolean; shiftUp: boolean; shiftDown: boolean; reset: boolean; toggleHandbrake: boolean; };
+    getTriggers: () => { 
+        toggleEngine: boolean; 
+        shiftUp: boolean; 
+        shiftDown: boolean; 
+        reset: boolean; 
+        toggleHandbrake: boolean;
+        
+        // Virtual Pedal Shortcuts
+        setVirtualThrottleFull: boolean;
+        setVirtualThrottleZero: boolean;
+        setVirtualBrakeFull: boolean;
+        setVirtualBrakeZero: boolean;
+        setVirtualClutchFull: boolean;
+        setVirtualClutchZero: boolean;
+        setVirtualSteeringLeftFull: boolean;
+        setVirtualSteeringRightFull: boolean;
+    };
     callbacks: GameLoopCallbacks;
 }
 
@@ -129,7 +145,15 @@ export class GameLoop {
         // Merge discrete triggers into inputs for physics step
         const inputs: InputState = {
             ...baseInputs,
-            toggleHandbrake: triggers.toggleHandbrake
+            toggleHandbrake: triggers.toggleHandbrake,
+            setVirtualThrottleFull: triggers.setVirtualThrottleFull,
+            setVirtualThrottleZero: triggers.setVirtualThrottleZero,
+            setVirtualBrakeFull: triggers.setVirtualBrakeFull,
+            setVirtualBrakeZero: triggers.setVirtualBrakeZero,
+            setVirtualClutchFull: triggers.setVirtualClutchFull,
+            setVirtualClutchZero: triggers.setVirtualClutchZero,
+            setVirtualSteeringLeftFull: triggers.setVirtualSteeringLeftFull,
+            setVirtualSteeringRightFull: triggers.setVirtualSteeringRightFull
         };
 
         // Default env
@@ -170,6 +194,12 @@ export class GameLoop {
             this.state.starterActive = false;
             this.state.stoppingState = StoppingState.MOVING;
             
+            // Reset Virtual Pedals
+            this.state.virtualThrottle = 0;
+            this.state.virtualBrake = 0;
+            this.state.virtualClutch = 0;
+            this.state.virtualSteering = 0;
+
             this.state.handbrakeInput = 1.0;
             this.state.handbrakePulled = true;
 

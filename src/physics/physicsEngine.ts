@@ -19,7 +19,14 @@ export const updatePhysics = (
   
   // 1. Process Inputs
   const currentSpeed = state.localVelocity.x;
-  let nextState = processInputs(state, config.controls, inputState, dt, currentSpeed);
+  let nextState = processInputs(
+    state, 
+    config.controls, 
+    config.chassis.maxSteeringWheelAngle, 
+    inputState, 
+    dt, 
+    currentSpeed
+  );
 
   nextState.steerAngle = (nextState.steeringWheelAngle / config.chassis.steeringRatio) * (Math.PI / 180);
 

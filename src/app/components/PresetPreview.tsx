@@ -97,7 +97,6 @@ const KeyboardPreview = ({
 
     return (
         <div 
-            // Removed origin-top to allow centering
             className="grid gap-x-1.5 gap-y-2 select-none pl-2 py-2 scale-95" 
             style={{ 
                 // 24-column grid allows for 0.5 unit staggering (Standard key = 4 cols)
@@ -137,7 +136,6 @@ const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
     const { t } = useLanguage();
 
     return (
-        // Removed origin-top to allow centering
         <div className="flex gap-6 justify-center select-none scale-90">
             {/* Left Hand: QWAZSX */}
             <div className="flex flex-col gap-2">
@@ -153,15 +151,12 @@ const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
                     <LabeledKey labelKey="label.brk" keyLabel={getKey(ControlAction.BRAKE)} colorClass="bg-slate-200 dark:bg-slate-600 border-b-red-400" labelColorClass="text-red-500" />
                     <LabeledKey labelKey="label.shift_down" keyLabel={getKey(ControlAction.SHIFT_DOWN)} />
                 </div>
-                {/* Use mt-auto to push label to bottom, ensuring alignment with right column */}
                 <div className="mt-auto text-center text-[9px] text-slate-400 font-bold border-t border-slate-200 dark:border-slate-700 pt-1 mt-1">{t('label.left_hand')}</div>
             </div>
 
-            {/* Divider */}
             <div className="w-px bg-slate-200 dark:bg-slate-700"></div>
 
             {/* Right Hand: L , . */}
-            {/* Remove justify-center to allow mt-auto to work properly */}
             <div className="flex flex-col gap-2 items-center">
                 <div className="flex flex-col items-center mb-1">
                     <LabeledKey labelKey="label.clutch" keyLabel={getKey(ControlAction.CLUTCH)} size="sm" />
@@ -180,7 +175,6 @@ const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
                     />
                 </div>
 
-                {/* Use mt-auto to push label to bottom */}
                 <div className="mt-auto text-center text-[9px] text-slate-400 font-bold border-t border-slate-200 dark:border-slate-700 pt-1 mt-1 w-full">{t('label.right_hand')}</div>
             </div>
         </div>
@@ -189,13 +183,10 @@ const DirtLayout = ({ mapping }: { mapping: KeyMapping }) => {
 
 export const PresetPreview: React.FC<PresetPreviewProps> = ({ id, name, mapping, isActive, onClick, onDelete }) => {
     
-    // Determine which visualizer to use
     let Content = null;
     if (id === 'wasd') {
-        // Use new Generic Grid for WASD
         Content = <KeyboardPreview layout={WASD_LAYOUT_CONFIG} mapping={mapping} />;
     } else if (id === 'dirt') {
-        // Keep specialized layout for Dirt
         Content = <DirtLayout mapping={mapping} />;
     }
 
@@ -210,7 +201,6 @@ export const PresetPreview: React.FC<PresetPreviewProps> = ({ id, name, mapping,
                 }
             `}
         >
-            {/* Header */}
             <div className="flex justify-between items-start">
                 <h3 className={`font-bold text-sm ${isActive ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-200'}`}>
                     {name}
@@ -218,7 +208,6 @@ export const PresetPreview: React.FC<PresetPreviewProps> = ({ id, name, mapping,
                 {isActive && <span className="text-[9px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded shadow-sm tracking-wider">ACTIVE</span>}
             </div>
 
-            {/* Content: Either custom visualizer or simple count for user presets */}
             <div className="pt-2 min-h-[5rem] flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-lg overflow-hidden py-4">
                 {Content ? (
                     Content
@@ -234,7 +223,6 @@ export const PresetPreview: React.FC<PresetPreviewProps> = ({ id, name, mapping,
                 )}
             </div>
 
-            {/* Delete Button for Custom */}
             {onDelete && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); onDelete(); }}

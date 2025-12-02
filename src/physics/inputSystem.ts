@@ -9,40 +9,144 @@ const moveTowards = (current: number, target: number, maxDelta: number) => {
     return current + Math.sign(target - current) * maxDelta;
 };
 
+// Virtual Pedal Rate (Units per second)
+// 2.0 = 0.5 seconds full travel (Fast adjustment, as requested)
+const VIRTUAL_STEP_RATE = 2.0; 
+
+const updateVirtualPedal = (
+    currentValue: number,
+    inc: boolean,
+    dec: boolean,
+    setFull: boolean | undefined,
+    setZero: boolean | undefined,
+    dt: number
+): number => {
+    // 1. Double-Tap Shortcuts (Instant)
+    if (setFull) return 1.0;
+    if (setZero) return 0.0;
+
+    // 2. Incremental Adjustment
+    let delta = 0;
+    if (inc) delta += VIRTUAL_STEP_RATE * dt;
+    if (dec) delta -= VIRTUAL_STEP_RATE * dt;
+    
+    return clamp(currentValue + delta, 0, 1);
+};
+
+const updateVirtualSteering = (
+    currentValue: number,
+    left: boolean,
+    right: boolean,
+    setFullLeft: boolean | undefined,
+    setFullRight: boolean | undefined,
+    dt: number
+): number => {
+    if (setFullLeft) return -1.0;
+    if (setFullRight) return 1.0;
+
+    let delta = 0;
+    if (left) delta -= VIRTUAL_STEP_RATE * dt;
+    if (right) delta += VIRTUAL_STEP_RATE * dt;
+
+    return clamp(currentValue + delta, -1, 1);
+};
+
 export const processInputs = (
     currentState: PhysicsState,
     config: ControlsConfig, 
+    maxSteeringWheelAngle: number,
     inputs: InputState,
     dt: number,
     currentSpeed: number 
 ): PhysicsState => {
     const newState = { ...currentState };
 
-    // 1. Clutch
-    // Priority: Analog -> Digital -> 0.0
-    let clutchTarget = 0.0;
-    if (inputs.clutchAnalog !== undefined) {
-        clutchTarget = clamp(inputs.clutchAnalog, 0, 1);
-    } else {
-        clutchTarget = inputs.clutch ? 1.0 : 0.0;
-    }
-    newState.clutchPosition = exponentialDecay(newState.clutchPosition, clutchTarget, config.clutchTau, dt);
+    // Initialize virtuals if undefined (safety)
+    if (newState.virtualThrottle === undefined) newState.virtualThrottle = 0;
+    if (newState.virtualBrake === undefined) newState.virtualBrake = 0;
+    if (newState.virtualClutch === undefined) newState.virtualClutch = 0;
+    if (newState.virtualSteering === undefined) newState.virtualSteering = 0;
 
-    // 2. Throttle
+    // --- 1. Update Virtual Pedals (Accumulators) ---
+    // Handle Double-Tap Shortcuts and Incremental keys
+    newState.virtualThrottle = updateVirtualPedal(
+        newState.virtualThrottle, 
+        inputs.throttleInc, 
+        inputs.throttleDec, 
+        inputs.setVirtualThrottleFull,
+        inputs.setVirtualThrottleZero,
+        dt
+    );
+    newState.virtualBrake = updateVirtualPedal(
+        newState.virtualBrake, 
+        inputs.brakeInc, 
+        inputs.brakeDec, 
+        inputs.setVirtualBrakeFull,
+        inputs.setVirtualBrakeZero,
+        dt
+    );
+    newState.virtualClutch = updateVirtualPedal(
+        newState.virtualClutch, 
+        inputs.clutchInc, 
+        inputs.clutchDec, 
+        inputs.setVirtualClutchFull,
+        inputs.setVirtualClutchZero,
+        dt
+    );
+
+    // Update Virtual Steering Accumulator
+    // IMPORTANT: If main digital steering keys are pressed, we reset the fine tune
+    if (inputs.left || inputs.right) {
+        newState.virtualSteering = 0;
+    } else {
+        newState.virtualSteering = updateVirtualSteering(
+            newState.virtualSteering,
+            inputs.steerLeftInc,
+            inputs.steerRightInc,
+            inputs.setVirtualSteeringLeftFull,
+            inputs.setVirtualSteeringRightFull,
+            dt
+        );
+    }
+
+    // --- 2. Resolve Targets (Priority: Analog > Digital Full > Virtual) ---
+
+    // THROTTLE
     let throttleTarget = 0.0;
     if (inputs.throttleAnalog !== undefined) {
         throttleTarget = clamp(inputs.throttleAnalog, 0, 1);
+    } else if (inputs.throttle) {
+        // Digital "Floor it" overrides virtual
+        throttleTarget = 1.0; 
+        // User Request: Reset virtual throttle so release returns to 0 (no memory)
+        newState.virtualThrottle = 0;
     } else {
-        throttleTarget = inputs.throttle ? 1.0 : 0.0;
+        // Fallback to virtual accumulator
+        throttleTarget = newState.virtualThrottle;
     }
     newState.throttleInput = exponentialDecay(newState.throttleInput, throttleTarget, config.throttleTau, dt);
 
-    // 3. Brake
+    // CLUTCH
+    let clutchTarget = 0.0;
+    if (inputs.clutchAnalog !== undefined) {
+        clutchTarget = clamp(inputs.clutchAnalog, 0, 1);
+    } else if (inputs.clutch) {
+        clutchTarget = 1.0;
+        // Note: We intentionally do NOT reset virtual clutch here.
+        // It's useful to keep bite point setting after a full shift.
+    } else {
+        clutchTarget = newState.virtualClutch;
+    }
+    newState.clutchPosition = exponentialDecay(newState.clutchPosition, clutchTarget, config.clutchTau, dt);
+
+    // BRAKE
     let brakeTarget = 0.0;
     if (inputs.brakeAnalog !== undefined) {
         brakeTarget = clamp(inputs.brakeAnalog, 0, 1);
+    } else if (inputs.brake) {
+        brakeTarget = 1.0;
     } else {
-        brakeTarget = inputs.brake ? 1.0 : 0.0;
+        brakeTarget = newState.virtualBrake;
     }
     newState.brakeInput = exponentialDecay(newState.brakeInput, brakeTarget, config.brakeTau, dt);
 
@@ -89,10 +193,15 @@ export const processInputs = (
     } else {
         if (inputs.left) steerTarget -= 1.0; 
         if (inputs.right) steerTarget += 1.0;
+        
+        // If digital steering is NOT engaged, use virtual steering
+        if (!inputs.left && !inputs.right) {
+            steerTarget = newState.virtualSteering;
+        }
     }
 
     const effectiveTau = steerTarget === 0 ? config.steeringReturnTau : currentSteerTau;
-    const MAX_WHEEL_ANGLE = 540; 
+    const MAX_WHEEL_ANGLE = maxSteeringWheelAngle; 
     
     const targetAngle = steerTarget * MAX_WHEEL_ANGLE;
     newState.steeringWheelAngle = exponentialDecay(newState.steeringWheelAngle, targetAngle, effectiveTau, dt);

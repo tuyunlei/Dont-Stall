@@ -8,7 +8,10 @@ interface KeyCapProps {
 }
 
 const formatKeyLabel = (code: string) => {
-    return code
+    // Handle chords like "Shift+KeyW"
+    const parts = code.split('+');
+    
+    return parts.map(part => part
         .replace('Key', '')
         .replace('ArrowUp', '↑')
         .replace('ArrowDown', '↓')
@@ -19,7 +22,11 @@ const formatKeyLabel = (code: string) => {
         .replace('ControlLeft', 'Ctrl')
         .replace('Space', 'Space')
         .replace('Comma', ',')
-        .replace('Period', '.');
+        .replace('Period', '.')
+        .replace('Shift', '⇧')
+        .replace('Ctrl', '⌃')
+        .replace('Alt', '⌥')
+    ).join('+');
 };
 
 export const KeyCap: React.FC<KeyCapProps> = ({ label, size = 'sm', className = '' }) => {
@@ -37,7 +44,7 @@ export const KeyCap: React.FC<KeyCapProps> = ({ label, size = 'sm', className = 
             bg-slate-100 dark:bg-slate-700 
             text-slate-600 dark:text-slate-200 
             border-slate-300 dark:border-slate-900 
-            rounded font-mono font-bold leading-none select-none shadow-sm mx-1 align-middle
+            rounded font-mono font-bold leading-none select-none shadow-sm mx-1 align-middle whitespace-nowrap
             ${sizeClasses[size]} 
             ${className}
         `}>

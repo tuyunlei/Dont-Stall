@@ -25,6 +25,12 @@ export const createInitialState = (startPos: Vector2, startHeading: number): Phy
         steeringWheelAngle: 0,
         steerAngle: 0,
 
+        // Virtual Pedals (Accumulators)
+        virtualThrottle: 0,
+        virtualBrake: 0,
+        virtualClutch: 0,
+        virtualSteering: 0,
+
         // Powertrain State
         rpm: 0,
         gear: 0,
