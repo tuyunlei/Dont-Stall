@@ -1,5 +1,5 @@
 
-export const DEG_TO_RAD = Math.PI / 180;
+
 export const RAD_TO_RPM = 9.5493; // 60 / (2 * PI)
 
 export const lerp = (start: number, end: number, factor: number) => start + (end - start) * factor;
@@ -57,15 +57,6 @@ export const interpolateTable = (table: {x: number, y: number}[], xVal: number):
     }
   }
   return 0;
-};
-
-export const rotateVector = (v: {x: number, y: number}, angle: number) => {
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    return {
-        x: v.x * cos - v.y * sin,
-        y: v.x * sin + v.y * cos
-    };
 };
 
 export const polarToCartesian = (cx: number, cy: number, radius: number, angleInDegrees: number) => {

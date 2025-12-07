@@ -1,4 +1,5 @@
 
+
 import { EngineConfig } from '../../config/types';
 import { clamp, interpolateTable } from '../../utils/math';
 
@@ -6,11 +7,6 @@ export interface EngineState {
     rpm: number;
     integralError: number;
 }
-
-export const initialEngineState: EngineState = {
-    rpm: 0,
-    integralError: 0
-};
 
 export const calculateEngineTorque = (
     rpm: number, 

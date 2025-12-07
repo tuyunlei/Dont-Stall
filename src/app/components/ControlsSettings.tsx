@@ -1,10 +1,12 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useControls } from '../contexts/ControlsContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ControlAction } from '../../config/controls';
 import { KeyCap } from './KeyCap';
 import { PresetPreview } from './PresetPreview';
+import { getEventKeyString } from '../../utils/input';
 
 interface ControlsSettingsProps {
     onClose: () => void;
@@ -32,20 +34,6 @@ export const ControlsSettings: React.FC<ControlsSettingsProps> = ({ onClose }) =
 
         const isModifierKey = (code: string) => 
             code.startsWith('Shift') || code.startsWith('Control') || code.startsWith('Alt');
-
-        // Logic duplicated from useInputControl to ensure consistency
-        const getEventKeyString = (e: KeyboardEvent): string => {
-            const isShift = e.code === 'ShiftLeft' || e.code === 'ShiftRight';
-            const isCtrl = e.code === 'ControlLeft' || e.code === 'ControlRight';
-            const isAlt = e.code === 'AltLeft' || e.code === 'AltRight';
-
-            const parts = [];
-            if (e.shiftKey && !isShift) parts.push('Shift');
-            if (e.ctrlKey && !isCtrl) parts.push('Ctrl');
-            if (e.altKey && !isAlt) parts.push('Alt');
-            parts.push(e.code);
-            return parts.join('+');
-        };
 
         const bindKey = (keyString: string) => {
             const currentKeys = currentMapping[listeningAction];

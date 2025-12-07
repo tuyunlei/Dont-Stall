@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useEffect, useState } from 'react';
 import { PhysicsState, InputState } from '../../physics/types';
 import { CarConfig } from '../../config/types';
@@ -15,6 +16,7 @@ import { InstructionText } from './InstructionText';
 import { LessonRuntime, LessonRuntimeState, LessonStatus } from '../../game/lessonRuntime';
 import { LessonOverlay } from './LessonOverlay';
 import { GameLoopProvider, useGameLoopSetter } from '../contexts/GameLoopContext';
+import { getSafetyInputs } from '../../game/systems/InputSystem';
 
 interface GameCanvasProps {
   level: LevelData;
@@ -72,7 +74,7 @@ const GameCanvasContent: React.FC<GameCanvasProps> = ({ level, mode, carConfig, 
               setLessonStatus('failed');
               onLessonFinish?.(def.id, 'failed');
           },
-          onObjectiveCompleted: (id) => console.log('Objective Complete', id),
+          onObjectiveCompleted: (id) => {},
           onHintTriggered: (msgKey) => {
               showHint(msgKey);
           }
@@ -104,18 +106,7 @@ const GameCanvasContent: React.FC<GameCanvasProps> = ({ level, mode, carConfig, 
         getConfig: () => carConfig,
         getInputs: () => {
             if (activeLesson && (lessonStatus === 'success' || lessonStatus === 'failed')) {
-                return {
-                    throttle: false,
-                    brake: false,
-                    left: false,
-                    right: false,
-                    clutch: false,
-                    handbrake: true,
-                    handbrakeAnalog: 1.0,
-                    throttleAnalog: 0,
-                    brakeAnalog: 0,
-                    clutchAnalog: 0
-                } as InputState;
+                return getSafetyInputs();
             }
             return inputsRef.current;
         },
