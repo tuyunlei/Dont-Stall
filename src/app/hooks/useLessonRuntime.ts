@@ -1,4 +1,3 @@
-
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { LessonDefinition, LessonResult } from '../../game/lessonTypes';
 import { LessonRuntime, LessonRuntimeState, LessonRuntimeStatus } from '../../game/lessonRuntime';
@@ -30,6 +29,10 @@ export function useLessonRuntime(options: UseLessonRuntimeOptions): UseLessonRun
     const [activeHint, setActiveHint] = useState<string | null>(null);
     const hintTimeoutRef = useRef<number | undefined>(undefined);
 
+    // Use ref for callback to avoid dependency changes
+    const onLessonFinishRef = useRef(onLessonFinish);
+    onLessonFinishRef.current = onLessonFinish;
+
     const showHint = useCallback((msgKey: string) => {
         setActiveHint(msgKey);
         if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
@@ -42,16 +45,16 @@ export function useLessonRuntime(options: UseLessonRuntimeOptions): UseLessonRun
         return new LessonRuntime(def, {
             onLessonSuccess: (result: LessonResult) => {
                 setLessonStatus('success');
-                onLessonFinish?.(def.id, 'success');
+                onLessonFinishRef.current?.(def.id, 'success');
             },
             onLessonFailed: () => {
                 setLessonStatus('failed');
-                onLessonFinish?.(def.id, 'failed');
+                onLessonFinishRef.current?.(def.id, 'failed');
             },
             onObjectiveCompleted: () => {},
             onHintTriggered: showHint
         });
-    }, [onLessonFinish, showHint]);
+    }, [showHint]); // onLessonFinish removed from dependency
 
     const retry = useCallback(() => {
         if (!gameLoopRef.current || !activeLesson) return;
@@ -86,7 +89,7 @@ export function useLessonRuntime(options: UseLessonRuntimeOptions): UseLessonRun
         return () => {
             if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
         };
-    }, [activeLesson, createRuntime]);
+    }, [activeLesson, createRuntime, gameLoopRef]);
 
     // Polling lesson state for UI updates
     useEffect(() => {

@@ -1,5 +1,5 @@
-
-import { PhysicsState } from '../physics/types';
+import { PhysicsState, InputState, EnvironmentConfig } from '../physics/types';
+import { CarConfig } from '../config/types';
 
 export type TestCategory = 'UNIT' | 'SCENARIO';
 export type LogType = 'info' | 'action' | 'check' | 'pass' | 'fail';
@@ -27,9 +27,9 @@ export interface ITestContext {
     assert(condition: boolean, message: string, data?: LogData, l10n?: LocalizationParams): void;
     // Common properties or methods that tests might use can be added here as optional
     state?: PhysicsState;
-    config?: any;
-    environment?: any;
-    simulate?(frames: number, inputs: any): void;
+    config?: CarConfig;
+    environment?: EnvironmentConfig;
+    simulate?(frames: number, inputs: Partial<InputState>): void;
     action?(message: string, l10n?: LocalizationParams): void;
 }
 

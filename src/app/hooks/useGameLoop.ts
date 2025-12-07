@@ -1,5 +1,4 @@
-
-import { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { PhysicsState, InputState } from '../../physics/types';
 import { CarConfig } from '../../config/types';
 import { LevelData } from '../../game/types';
@@ -30,17 +29,33 @@ export function useGameLoop(options: UseGameLoopOptions): UseGameLoopResult {
     const { level, carConfig, getInputs, getTriggers, callbacks } = options;
 
     const gameLoopRef = useRef<GameLoop | null>(null);
-    const initialState = createInitialState(level.startPos, level.startHeading);
+
+    // Use refs to store callbacks and variable dependencies to avoid re-triggering useEffect
+    const callbacksRef = useRef(callbacks);
+    callbacksRef.current = callbacks;
+
+    const getInputsRef = useRef(getInputs);
+    getInputsRef.current = getInputs;
+
+    const getTriggersRef = useRef(getTriggers);
+    getTriggersRef.current = getTriggers;
+
+    // Memoize initialState so it doesn't change on every render unless level start properties change
+    const initialState = React.useMemo(
+        () => createInitialState(level.startPos, level.startHeading),
+        [level.startPos.x, level.startPos.y, level.startHeading]
+    );
 
     useEffect(() => {
         const loop = new GameLoop(initialState, {
             getLevel: () => level,
             getConfig: () => carConfig,
-            getInputs,
-            getTriggers,
+            // Wrap calls to ensure we always use the latest ref value
+            getInputs: () => getInputsRef.current(),
+            getTriggers: () => getTriggersRef.current(),
             callbacks: {
-                onTick: callbacks.onTick,
-                onMessage: callbacks.onMessage
+                onTick: (state) => callbacksRef.current.onTick(state),
+                onMessage: (msg) => callbacksRef.current.onMessage(msg)
             }
         });
 
@@ -50,7 +65,7 @@ export function useGameLoop(options: UseGameLoopOptions): UseGameLoopResult {
         return () => {
             loop.stop();
         };
-    }, [level, carConfig, getInputs, getTriggers, callbacks.onTick, callbacks.onMessage]);
+    }, [level, carConfig, initialState]); // Removed callbacks/inputs/triggers from dependencies
 
     const reset = useCallback((state: PhysicsState) => {
         gameLoopRef.current?.reset(state);
