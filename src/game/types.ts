@@ -13,7 +13,7 @@ export interface MapObject {
 }
 
 // Re-export from physics to avoid circular dependency
-export { EnvironmentConfig } from '../physics/types';
+export type { EnvironmentConfig } from '../physics/types';
 
 export interface LevelData {
   id: string;
