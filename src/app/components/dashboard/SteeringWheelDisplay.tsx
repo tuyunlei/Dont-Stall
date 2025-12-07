@@ -1,54 +1,47 @@
 
 import React, { useRef, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { PhysicsState } from '../../../physics/types';
 import { lerp } from '../../../utils/math';
+import { useGameLoopState } from '../../contexts/GameLoopContext';
 
 interface SteeringWheelDisplayProps {
-    angle: number; // Fallback / Initial value
-    latestStateRef?: React.MutableRefObject<PhysicsState>; // High frequency source
+    angle: number; // Low-freq fallback
     isDark?: boolean;
 }
 
-export const SteeringWheelDisplay: React.FC<SteeringWheelDisplayProps> = ({ angle, latestStateRef, isDark }) => {
+export const SteeringWheelDisplay: React.FC<SteeringWheelDisplayProps> = ({ angle, isDark }) => {
     const { t } = useLanguage();
+    const latestStateRef = useGameLoopState();
     
-    // Direct DOM access for rotation
     const wheelRef = useRef<HTMLDivElement>(null);
     const textRef = useRef<HTMLSpanElement>(null);
-
-    // Keep track of current visual angle for lerping inside RAF
     const currentAngleRef = useRef(angle);
 
     useEffect(() => {
-        if (!latestStateRef || !wheelRef.current) return;
+        if (!latestStateRef) return;
 
         let rafId: number;
 
         const loop = () => {
-            const target = latestStateRef.current.steeringWheelAngle;
-            // Smoothly interpolate (Visual Smoothing)
-            // Using 0.3 factor gives a snappy but smooth feel at 60fps
-            currentAngleRef.current = lerp(currentAngleRef.current, target, 0.3);
-            
-            // 1. Rotate Wheel
-            if (wheelRef.current) {
-                wheelRef.current.style.transform = `rotate(${currentAngleRef.current}deg)`;
-            }
-
-            // 2. Update Text (Optional, prevents text jitter if updated too fast, but RAF is fine)
-            if (textRef.current) {
-                const rounded = Math.round(currentAngleRef.current);
-                textRef.current.textContent = `${rounded}°`;
+            if (latestStateRef.current) {
+                const target = latestStateRef.current.steeringWheelAngle;
+                currentAngleRef.current = lerp(currentAngleRef.current, target, 0.3);
                 
-                // Update color based on angle severity (Dynamic Logic in RAF)
-                if (Math.abs(rounded) > 360) {
-                    textRef.current.className = 'text-[9px] font-mono text-red-400';
-                } else {
-                    textRef.current.className = `text-[9px] font-mono ${isDark ? 'text-slate-600' : 'text-slate-500'}`;
+                if (wheelRef.current) {
+                    wheelRef.current.style.transform = `rotate(${currentAngleRef.current}deg)`;
+                }
+
+                if (textRef.current) {
+                    const rounded = Math.round(currentAngleRef.current);
+                    textRef.current.textContent = `${rounded}°`;
+                    
+                    if (Math.abs(rounded) > 360) {
+                        textRef.current.className = 'text-[9px] font-mono text-red-400';
+                    } else {
+                        textRef.current.className = `text-[9px] font-mono ${isDark ? 'text-slate-600' : 'text-slate-500'}`;
+                    }
                 }
             }
-
             rafId = requestAnimationFrame(loop);
         };
 
@@ -57,15 +50,15 @@ export const SteeringWheelDisplay: React.FC<SteeringWheelDisplayProps> = ({ angl
         return () => cancelAnimationFrame(rafId);
     }, [latestStateRef, isDark]);
 
-    // If no ref provided (e.g. legacy/testing), fallback to React prop
-    const style = latestStateRef ? {} : { transform: `rotate(${angle}deg)` };
+    // Fallback if context is not ready
+    const style = latestStateRef.current ? {} : { transform: `rotate(${angle}deg)` };
 
     return (
         <div className="flex flex-col items-center gap-1">
              <div className={`w-32 h-32 rounded-full border-4 relative flex items-center justify-center shadow-inner overflow-hidden ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-300 bg-slate-200'}`}>
                 <div 
                     ref={wheelRef}
-                    className="w-full h-full relative will-change-transform" // Hint to browser for GPU layer
+                    className="w-full h-full relative will-change-transform" 
                     style={style}
                 >
                     <div className={`absolute inset-0 rounded-full border-2 opacity-50 ${isDark ? 'border-slate-600' : 'border-slate-400'}`}></div>

@@ -11,16 +11,12 @@ import { useTheme } from '../contexts/ThemeContext';
 
 interface DashboardProps {
   state: PhysicsState; // Throttled state for Low-Freq UI (Gear, Lights)
-  latestStateRef: React.MutableRefObject<PhysicsState>; // Real-time state for High-Freq UI (Needles, Wheel)
   config: CarConfig;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ state, latestStateRef, config }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ state, config }) => {
   const { t } = useLanguage();
   const { isDark } = useTheme();
-  
-  // Note: We removed the `visualStateRef` and the lerp logic from here.
-  // The Lerp logic is now inside the Gauge and SteeringWheelDisplay components via RAF.
 
   const getGearLabel = (g: number) => {
       if (g === 0) return 'N';
@@ -54,9 +50,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, latestStateRef, con
         {/* Main Cluster */}
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 pb-8 flex items-end gap-8 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transform-gpu transition-colors duration-300">
             <Gauge 
-                value={state.rpm} // Fallback value
-                valueAccessor={(s) => s.rpm} // High-frequency accessor
-                latestStateRef={latestStateRef}
+                value={state.rpm} // Fallback
+                valueAccessor={(s) => s.rpm}
                 max={maxDisplayedRPM} 
                 label={t('dash.rpm')} 
                 unit="x1000" 
@@ -82,7 +77,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, latestStateRef, con
             <Gauge 
                 value={state.speedKmh} 
                 valueAccessor={(s) => s.speedKmh}
-                latestStateRef={latestStateRef}
                 max={220} 
                 label={t('dash.speed')} 
                 unit="km/h" 
@@ -96,28 +90,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, latestStateRef, con
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 flex gap-4 shadow-xl h-fit transition-colors duration-300 items-end">
             <SteeringWheelDisplay 
                 angle={state.steeringWheelAngle} 
-                latestStateRef={latestStateRef}
                 isDark={isDark} 
             />
             
             <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1 h-32 self-center"></div>
             
-            {/* Pedals Group (Clutch, Brake, Throttle) - These are simple bars, CSS transition handles them well enough */}
             <div className="flex gap-2 items-end">
                 <TelemetryBar value={state.clutchPosition} color="bg-yellow-500" label={t('dash.clutch')} isDark={isDark} />
                 <TelemetryBar value={state.brakeInput} color="bg-red-500" label={t('dash.brake')} isDark={isDark} />
                 <TelemetryBar value={state.throttleInput} color="bg-green-500" label={t('dash.throttle')} isDark={isDark} />
             </div>
 
-            {/* Separator for Handbrake */}
             <div className="w-px bg-slate-300 dark:bg-slate-700 mx-1 h-20 self-end opacity-50"></div>
 
-            {/* Handbrake Group */}
             <div className="flex items-end pl-1">
                 {handbrakeMode === 'RATCHET' ? (
                     <HandbrakeLever 
                         value={state.handbrakeInput} 
-                        latestStateRef={latestStateRef}
                         isDark={isDark} 
                     />
                 ) : (

@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { describeArc, mapValueToAngle, polarToCartesian, lerp } from '../../../utils/math';
 import { PhysicsState } from '../../../physics/types';
+import { useGameLoopState } from '../../contexts/GameLoopContext';
 
 interface Zone {
     min: number;
@@ -12,9 +13,8 @@ interface Zone {
 }
 
 interface GaugeProps {
-    value: number; // Fallback
-    valueAccessor?: (state: PhysicsState) => number; // High-freq accessor
-    latestStateRef?: React.MutableRefObject<PhysicsState>; // High-freq source
+    value: number; // Low-freq Fallback for initial render
+    valueAccessor: (state: PhysicsState) => number;
     min?: number;
     max: number;
     label: string;
@@ -29,7 +29,6 @@ interface GaugeProps {
 export const Gauge: React.FC<GaugeProps> = ({
     value,
     valueAccessor,
-    latestStateRef,
     min = 0,
     max,
     label,
@@ -47,40 +46,36 @@ export const Gauge: React.FC<GaugeProps> = ({
     const END_ANGLE = 135;
     const TOTAL_ANGLE = 270;
 
-    // Direct DOM Refs for High Performance Updates
+    const latestStateRef = useGameLoopState();
+
     const needleRef = useRef<SVGGElement>(null);
     const textRef = useRef<HTMLSpanElement>(null);
     const currentValRef = useRef(value);
 
-    // Initial Angle for fallback
     const initialAngle = mapValueToAngle(value, min, max);
 
     useEffect(() => {
-        if (!latestStateRef || !valueAccessor || !needleRef.current) return;
+        if (!latestStateRef) return;
 
         let rafId: number;
 
         const loop = () => {
-            const target = valueAccessor(latestStateRef.current);
-            // Smooth Interpolation
-            currentValRef.current = lerp(currentValRef.current, target, 0.2);
+            if (latestStateRef.current) {
+                const target = valueAccessor(latestStateRef.current);
+                currentValRef.current = lerp(currentValRef.current, target, 0.2);
 
-            // 1. Rotate Needle
-            // Re-implement mapValueToAngle logic inline for speed or call utility
-            // mapValueToAngle = startAngle + ((val - min) / (max - min)) * totalAngle
-            const clamped = Math.min(max, Math.max(min, currentValRef.current));
-            const ratio = (clamped - min) / (max - min);
-            const angle = START_ANGLE + ratio * TOTAL_ANGLE;
+                const clamped = Math.min(max, Math.max(min, currentValRef.current));
+                const ratio = (clamped - min) / (max - min);
+                const angle = START_ANGLE + ratio * TOTAL_ANGLE;
 
-            if (needleRef.current) {
-                needleRef.current.setAttribute('transform', `rotate(${angle}, ${CX}, ${CY})`);
+                if (needleRef.current) {
+                    needleRef.current.setAttribute('transform', `rotate(${angle}, ${CX}, ${CY})`);
+                }
+
+                if (textRef.current) {
+                    textRef.current.textContent = Math.round(currentValRef.current).toString();
+                }
             }
-
-            // 2. Update Text
-            if (textRef.current) {
-                textRef.current.textContent = Math.round(currentValRef.current).toString();
-            }
-
             rafId = requestAnimationFrame(loop);
         };
 
@@ -95,7 +90,6 @@ export const Gauge: React.FC<GaugeProps> = ({
     const ringColor = isDark ? "#1e293b" : "#cbd5e1";
     const textColor = isDark ? "white" : "#1e293b";
 
-    // Generate Ticks
     const ticks = [];
     const totalRange = max - min;
     const majorStep = totalRange / majorTicksCount;
