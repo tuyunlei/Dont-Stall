@@ -9,7 +9,7 @@ import {
 import { TelemetrySnapshot } from './telemetry';
 import { GameEvent } from './events';
 import { evaluateCondition } from './conditionEvaluator';
-import { SCORING_CONSTANTS } from '../app/constants';
+import { SCORING_CONSTANTS } from './constants';
 
 export type LessonRuntimeStatus = 'idle' | 'running' | 'success' | 'failed';
 export type ObjectiveStatus = 'pending' | 'completed';

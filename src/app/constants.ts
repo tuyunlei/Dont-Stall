@@ -3,6 +3,9 @@
  * UI 和游戏逻辑常量
  */
 
+// Re-export scoring constants from the game layer to ensure single source of truth
+export { SCORING_CONSTANTS } from '../game/constants';
+
 // === 仪表盘 ===
 export const DASHBOARD_CONSTANTS = {
     /** RPM 熄火危险区最大值 */
@@ -13,21 +16,6 @@ export const DASHBOARD_CONSTANTS = {
 
     /** RPM 表最大值向上取整的单位 */
     RPM_GAUGE_ROUND_UNIT: 1000,
-} as const;
-
-// === 评分系统 ===
-export const SCORING_CONSTANTS = {
-    /** S 级评分阈值 */
-    GRADE_S_THRESHOLD: 95,
-
-    /** A 级评分阈值 */
-    GRADE_A_THRESHOLD: 85,
-
-    /** B 级评分阈值 */
-    GRADE_B_THRESHOLD: 70,
-
-    /** C 级评分阈值 */
-    GRADE_C_THRESHOLD: 60,
 } as const;
 
 // === 时间常量 ===
